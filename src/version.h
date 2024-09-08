@@ -1,0 +1,8 @@
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 0
+#define VERSION_PATCH 0
+#define VERSION_BUILD 6
+#define VERSION_DATE "2024-09-05"
+#define VERSION_TIME "20:11:45"
+#define VERSION "0.0.0.6"
+#define VERSION_STR "0.0.0.6 (2024-09-05 20:11:45)"
