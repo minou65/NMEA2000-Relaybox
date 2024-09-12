@@ -11,14 +11,12 @@
 #include "neotimer.h"
 #include "version.h"
 
-
-const uint8_t maxRelays = 4;
-const uint8_t relayPins[maxRelays] = { 2, 3, 4, 5 }; // Pins connected to the relay module
-tN2kOnOff relayStatus[maxRelays];
-
+void HandleSwitchbankControl(const tN2kMsg& N2kMsg);
+void SendSwitchBankStatus();
 
 uint8_t N2KSource = 22;
 uint8_t BankInstance = 1;
+uint8_t RelayAddress = 1;
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
 
@@ -53,13 +51,6 @@ void setup() {
     }
 
     Serial.printf("Firmware version:%s\n", Version);
-
-    // Initialize relay pins as outputs
-    for (int _i = 0; _i < maxRelays; _i++) {
-        pinMode(relayPins[_i], OUTPUT);
-        digitalWrite(relayPins[_i], LOW); // Ensure all relays are off initially
-        relayStatus[_i] = N2kOnOff_Off;
-    }
 
     // Reserve enough buffer for sending all messages. This does not work on small memory devices like Uno or Mega
     NMEA2000.SetN2kCANMsgBufSize(150);
@@ -123,12 +114,10 @@ void ControlRelay(tN2kOnOff state, uint8_t Index) {
 
     switch (state) {
         case N2kOnOff_Off:
-            digitalWrite(relayPins[Index], LOW);
-            relayStatus[Index] = N2kOnOff_Off;
+            relays[Index]->Disable();
             break;
         case N2kOnOff_On:
-            digitalWrite(relayPins[Index], HIGH);
-            relayStatus[Index] = N2kOnOff_On;
+            relays[Index]->Enable();
             break;
     }
 
@@ -141,10 +130,11 @@ void HandleSwitchbankControl(const tN2kMsg& N2kMsg) {
 
     if (ParseN2kSwitchbankControl(N2kMsg, BankInstance, _BankStatus)) {
 
-        for (uint8_t _i = 0; _i < maxRelays; _i++) {
-            tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BankStatus, _i);
+        for (int _i = 0; _i < MAX_RELAYS; _i++) {
+            uint8_t _index = _i + (RelayAddress - 1);
+            tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BankStatus, _index);
 
-            if (_ItemStatus != relayStatus[_i]) {
+            if (_ItemStatus != relays[_i]->Status()) {
                 ControlRelay(_ItemStatus, _i);
             }
         }
@@ -159,12 +149,14 @@ void SendSwitchBankStatus(){
     SwitchBankStatusScheduler.UpdateNextTime();
 
     N2kResetBinaryStatus(_BankStatus);
-    for (uint8_t _i = 0; _i < maxRelays; _i++) {
-        tN2kOnOff _ItemStatus = relayStatus[_i];
-        N2kSetStatusBinaryOnStatus(_BankStatus, _ItemStatus, _i);
+
+    for (uint8_t _i = 0; _i < MAX_RELAYS; _i++) {
+        tN2kOnOff _ItemStatus = relays[_i]->Status();
+        uint8_t _index = _i + (RelayAddress - 1);
+
+        if (_index < sizeof(_BankStatus)) {
+            N2kSetStatusBinaryOnStatus(_BankStatus, _ItemStatus, _index);
+        }
     }
-
-
     SetN2kBinaryStatus(_N2kMsg, BankInstance, _BankStatus);
-    
 }

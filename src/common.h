@@ -9,6 +9,9 @@
 	#include "WProgram.h"
 #endif
 
+#define MAX_RELAYS 4
+
+
 extern bool debugMode;
 
 
@@ -21,6 +24,7 @@ extern bool SaveConfiguration;
 
 extern uint8_t N2KSource;
 extern uint8_t BankInstance;
+extern uint8_t RelayAddress;
 
 extern char Version[];
 
