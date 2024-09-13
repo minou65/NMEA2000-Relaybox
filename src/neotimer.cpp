@@ -96,8 +96,10 @@ void Neotimer::repeatReset() {
  * Returns true if it finished
  */
 boolean Neotimer::done() {
-	if (!this->_timer.started) return false;
-	if ((millis() - this->_timer.last) >= this->_timer.time) {
+	if (!this->_timer.started) 
+		return false;
+	unsigned long _now = millis();
+	if ((_now - this->_timer.last) >= this->_timer.time) {
 		this->_timer.done = true;
 		this->_waiting = false;
 		return true;
@@ -111,6 +113,7 @@ boolean Neotimer::done() {
 void Neotimer::set(unsigned long t) {
 	this->_timer.time = t;
 }
+
 
 /*
  * Gets the timer preset
@@ -148,6 +151,16 @@ void Neotimer::start() {
 	this->reset();
 	this->_timer.started = true;
 	this->_waiting = true;
+}
+
+/*
+ * Start a timer
+ */
+void Neotimer::start(unsigned long t) {
+	this->reset();
+	this->_timer.started = true;
+	this->_waiting = true;
+	this->set(t);
 }
 
 /*

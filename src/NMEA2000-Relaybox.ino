@@ -5,6 +5,7 @@
 #include <esp_task_wdt.h>
 #include <N2kMessages.h>
 #include <NMEA2000_CAN.h>
+#include <vector>
 
 #include "common.h"
 #include "webhandling.h"
@@ -51,11 +52,13 @@ void setup() {
     }
 
     Serial.printf("Firmware version:%s\n", Version);
+    
+    webinit();
 
     // Reserve enough buffer for sending all messages. This does not work on small memory devices like Uno or Mega
-    NMEA2000.SetN2kCANMsgBufSize(150);
-    NMEA2000.SetN2kCANReceiveFrameBufSize(250);
-    NMEA2000.SetN2kCANSendFrameBufSize(250);
+    NMEA2000.SetN2kCANMsgBufSize(8);
+    NMEA2000.SetN2kCANReceiveFrameBufSize(150);
+    NMEA2000.SetN2kCANSendFrameBufSize(150);
 
     // Set Product information
     NMEA2000.SetProductInformation(
@@ -81,26 +84,27 @@ void setup() {
     NMEA2000.ExtendTransmitMessages(TransmitMessages);
 
     NMEA2000.SetOnOpen(OnN2kOpen);
-    NMEA2000.SetMsgHandler(HandleSwitchbankControl);
+    //NMEA2000.SetMsgHandler(HandleSwitchbankControl);
 
     NMEA2000.Open();
 
-    esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
-    esp_task_wdt_add(NULL); //add current thread to WDT watch
+    //esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+    //esp_task_wdt_add(NULL); //add current thread to WDT watch
 
     WDtimer.start();
 
-    ChangedConfiguration = true;
+    Serial.println("device initilized");
 }
 
 void loop() {
     SendSwitchBankStatus();
     NMEA2000.ParseMessages();
+    webLoop();
 
     if(NMEA2000.GetN2kSource() != N2KSource){
-		N2KSource = NMEA2000.GetN2kSource();
+        N2KSource = NMEA2000.GetN2kSource();
         SaveConfiguration = true;
-	}
+    }
 
     ChangedConfiguration = false;
 
@@ -109,39 +113,34 @@ void loop() {
     }
 }
 
-
 void ControlRelay(tN2kOnOff state, uint8_t Index) {
-
-    switch (state) {
-        case N2kOnOff_Off:
-            relays[Index]->Disable();
-            break;
-        case N2kOnOff_On:
-            relays[Index]->Enable();
-            break;
-    }
-
+    //switch (state) {
+    //    case N2kOnOff_Off:
+    //        relays[Index]->Disable();
+    //        break;
+    //    case N2kOnOff_On:
+    //        relays[Index]->Enable();
+    //        break;
+    //}
 }
 
 // Callback function for handling switch bank control messages
 void HandleSwitchbankControl(const tN2kMsg& N2kMsg) {
-
     tN2kBinaryStatus _BankStatus;
 
     if (ParseN2kSwitchbankControl(N2kMsg, BankInstance, _BankStatus)) {
+        //for (size_t _i = 0; _i < relays.size(); _i++) {
+        //    uint8_t _index = _i + (RelayAddress - 1);
+        //    tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BankStatus, _index);
 
-        for (int _i = 0; _i < MAX_RELAYS; _i++) {
-            uint8_t _index = _i + (RelayAddress - 1);
-            tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BankStatus, _index);
-
-            if (_ItemStatus != relays[_i]->Status()) {
-                ControlRelay(_ItemStatus, _i);
-            }
-        }
+        //    if (_ItemStatus != relays[_i]->Status()) {
+        //        ControlRelay(_ItemStatus, _i);
+        //    }
+        //}
     }
 }
 
-void SendSwitchBankStatus(){
+void SendSwitchBankStatus() {
     tN2kMsg _N2kMsg;
     tN2kBinaryStatus _BankStatus;
 
@@ -150,13 +149,13 @@ void SendSwitchBankStatus(){
 
     N2kResetBinaryStatus(_BankStatus);
 
-    for (uint8_t _i = 0; _i < MAX_RELAYS; _i++) {
-        tN2kOnOff _ItemStatus = relays[_i]->Status();
-        uint8_t _index = _i + (RelayAddress - 1);
+    //for (size_t _i = 0; _i < relays.size(); _i++) {
+    //    tN2kOnOff _ItemStatus = relays[_i]->Status();
+    //    uint8_t _index = _i + (RelayAddress - 1);
 
-        if (_index < sizeof(_BankStatus)) {
-            N2kSetStatusBinaryOnStatus(_BankStatus, _ItemStatus, _index);
-        }
-    }
+    //    if (_index < sizeof(_BankStatus)) {
+    //        N2kSetStatusBinaryOnStatus(_BankStatus, _ItemStatus, _index);
+    //    }
+    //}
     SetN2kBinaryStatus(_N2kMsg, BankInstance, _BankStatus);
 }

@@ -29,6 +29,7 @@ public:
 	boolean waiting();		// Indicates timer is started but not finished
 	boolean started();		// Indicates timer has started
 	void start();			//Starts a timer
+	void start(unsigned long t);
 	unsigned long stop();	//Stops a timer and returns elapsed time
 	unsigned long getEllapsed();	// Gets the ellapsed time
 	void restart();

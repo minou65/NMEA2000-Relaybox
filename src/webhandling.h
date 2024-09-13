@@ -11,12 +11,16 @@
 
 #include <IotWebConf.h>
 #include <N2kMessages.h>
+#include <IotWebConfOptionalGroup.h>
+
+#include "neotimer.h"
+
 
 // -- Initial password to connect to the Thing, when it creates an own Access Point.
 const char wifiInitialApPassword[] = "123456789";
 
-extern void wifiInit();
-extern void wifiLoop();
+extern void webinit();
+extern void webLoop();
 
 static WiFiClient wifiClient;
 extern IotWebConf iotWebConf;
@@ -74,41 +78,77 @@ private:
 };
 
 
-class Relay : public iotwebconf::ParameterGroup {
+class Relay : public iotwebconf::ChainedParameterGroup {
 public:
-    Relay(const char* relayId) : ParameterGroup(relayId, "Relay configuration") {
-        snprintf(_outputPinID, STRING_LEN, "%s-outputpin", this->getId());
-        this->addItem(&this->_OutputPinParam);
+    Relay(const char* id, const uint8_t gpio_) : ChainedParameterGroup(id, id) {
+
+        snprintf(_gpioID, STRING_LEN, "%s-gpio", this->getId());
+        snprintf(_offID, STRING_LEN, "%s-offtime", this->getId());
+
+        this->addItem(&this->gpioParam);
+        this->addItem(&this->offParam);
     }
 
-    uint8_t OutputPin() { return atoi(_OutputPinValue); };
-
-    void SetPinMode() {
-        pinMode(OutputPin(), OUTPUT);
+    void begin() {
+        uint8_t gpio_ = GPIO();
+        if ((gpio_ == 255)) return;
+        pinMode(gpio_, OUTPUT);
+        Off();
     };
-    void Enable(){
-        digitalWrite(OutputPin(), HIGH);
-        _Status = N2kOnOff_On;
+
+    void process() {
+		if (OffTimer.done()) {
+			Off();
+		}
     }
 
-    void Disable(){
-        digitalWrite(OutputPin(), LOW);
-        _Status = N2kOnOff_Off;
+    void On() {
+        uint8_t gpio_ = GPIO();
+        if ((gpio_ == 255)) return;
+        digitalWrite(gpio_, HIGH);
+        _Status = N2kOnOff_On;
+		if (atoi(_offValue) > 0) {
+			OffTimer.start(atoi(_offValue) * 1000);
+		}
+    }
 
+    void Off() {
+        uint8_t gpio_ = GPIO();
+        if ((gpio_ == 255)) return;
+        digitalWrite(gpio_, LOW);
+        _Status = N2kOnOff_Off;
     }
 
     tN2kOnOff Status() {
         return _Status;
     }
 
+//    void setNext(Relay* nextGroup) { this->nextGroup = nextGroup; nextGroup->prevGroup = this; };
+//    Relay* getNext() { return this->nextGroup; };
+//
+//protected:
+//    Relay* prevGroup = nullptr;
+//    Relay* nextGroup = nullptr;
+
 private:
-    iotwebconf::NumberParameter _OutputPinParam = iotwebconf::NumberParameter("OutputPin", _outputPinID, _OutputPinValue, NUMBER_LEN, "255", "1..255", "min='1' max='254' step='1'");
-    char _OutputPinValue[NUMBER_LEN];
-    char _outputPinID[STRING_LEN];
+
+    iotwebconf::NumberParameter gpioParam = iotwebconf::NumberParameter("GPIO", _gpioID, _gpioValue, NUMBER_LEN, "-1", "0..255", "min='0' max='255' step='1'");
+    iotwebconf::NumberParameter offParam = iotwebconf::NumberParameter("Off Time", _offID, _offValue, NUMBER_LEN, "0", "0..3000", "min='0' max='3000' step='1'");
+
+    uint8_t GPIO() { return atoi(_gpioValue); };
+
+    char _gpioValue[NUMBER_LEN];
+    char _gpioID[STRING_LEN];
+
+    char _offValue[NUMBER_LEN];
+    char _offID[STRING_LEN];
+
     tN2kOnOff _Status;
+
+	Neotimer OffTimer = Neotimer();
 };
 
-extern Relay* relays[MAX_RELAYS];
+
 
 #endif
 
