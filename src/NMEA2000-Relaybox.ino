@@ -16,7 +16,7 @@ void HandleSwitchbankControl(const tN2kMsg& N2kMsg);
 void SendSwitchBankStatus();
 
 uint8_t N2KSource = 22;
-uint8_t BankInstance = 1;
+uint8_t DeviceInstance = 1;
 uint8_t RelayAddress = 1;
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
@@ -84,7 +84,7 @@ void setup() {
     NMEA2000.ExtendTransmitMessages(TransmitMessages);
 
     NMEA2000.SetOnOpen(OnN2kOpen);
-    //NMEA2000.SetMsgHandler(HandleSwitchbankControl);
+    NMEA2000.SetMsgHandler(HandleSwitchbankControl);
 
     NMEA2000.Open();
 
@@ -101,6 +101,14 @@ void loop() {
     NMEA2000.ParseMessages();
     webLoop();
 
+    Relay* _relay = &Relay1;
+    while (_relay != nullptr) {
+        if (_relay->isActive()) {
+            _relay->process();
+        }
+		_relay = (Relay*)_relay->getNext();
+    }
+
     if(NMEA2000.GetN2kSource() != N2KSource){
         N2KSource = NMEA2000.GetN2kSource();
         SaveConfiguration = true;
@@ -113,49 +121,60 @@ void loop() {
     }
 }
 
-void ControlRelay(tN2kOnOff state, uint8_t Index) {
-    //switch (state) {
-    //    case N2kOnOff_Off:
-    //        relays[Index]->Disable();
-    //        break;
-    //    case N2kOnOff_On:
-    //        relays[Index]->Enable();
-    //        break;
-    //}
+void ControlRelay(tN2kOnOff state, Relay* relay) {
+    switch (state) {
+        case N2kOnOff_Off:
+            relay->Off();
+            break;
+        case N2kOnOff_On:
+            relay->On();
+            break;
+    }
 }
 
 // Callback function for handling switch bank control messages
 void HandleSwitchbankControl(const tN2kMsg& N2kMsg) {
-    tN2kBinaryStatus _BankStatus;
+    tN2kBinaryStatus _BinaryStatus;
 
-    if (ParseN2kSwitchbankControl(N2kMsg, BankInstance, _BankStatus)) {
-        //for (size_t _i = 0; _i < relays.size(); _i++) {
-        //    uint8_t _index = _i + (RelayAddress - 1);
-        //    tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BankStatus, _index);
+    if (ParseN2kSwitchbankControl(N2kMsg, DeviceInstance, _BinaryStatus)) {
 
-        //    if (_ItemStatus != relays[_i]->Status()) {
-        //        ControlRelay(_ItemStatus, _i);
-        //    }
-        //}
+        Relay* _relay = &Relay1;
+		uint8_t _index = 0;
+		while (_relay != nullptr) {
+            if (_relay->isActive()) {
+                tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BinaryStatus, _index + (RelayAddress - 1));
+
+                if (_ItemStatus != _relay->Status()) {
+                    ControlRelay(_ItemStatus, _relay);
+                }
+            }
+
+			_relay = (Relay*)_relay->getNext();
+			_index++;
+		}
     }
 }
 
 void SendSwitchBankStatus() {
     tN2kMsg _N2kMsg;
-    tN2kBinaryStatus _BankStatus;
+    tN2kBinaryStatus _BinaryStatus;
 
     if(!SwitchBankStatusScheduler.IsTime()) return;
     SwitchBankStatusScheduler.UpdateNextTime();
 
-    N2kResetBinaryStatus(_BankStatus);
+    N2kResetBinaryStatus(_BinaryStatus);
 
-    //for (size_t _i = 0; _i < relays.size(); _i++) {
-    //    tN2kOnOff _ItemStatus = relays[_i]->Status();
-    //    uint8_t _index = _i + (RelayAddress - 1);
+    Relay* _relay = &Relay1;
+    uint8_t _index = 0;
+	while (_relay != nullptr) {
+		if (_relay->isActive()) {
+			tN2kOnOff _ItemStatus = _relay->Status();
+			N2kSetStatusBinaryOnStatus(_BinaryStatus, _ItemStatus, _index + (RelayAddress - 1));
+		}
 
-    //    if (_index < sizeof(_BankStatus)) {
-    //        N2kSetStatusBinaryOnStatus(_BankStatus, _ItemStatus, _index);
-    //    }
-    //}
-    SetN2kBinaryStatus(_N2kMsg, BankInstance, _BankStatus);
+		_relay = (Relay*)_relay->getNext();
+		_index++;
+	}
+
+    SetN2kBinaryStatus(_N2kMsg, DeviceInstance, _BinaryStatus);
 }

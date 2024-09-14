@@ -66,10 +66,14 @@ iotwebconf::NumberParameter APModeOfflineParam = iotwebconf::NumberParameter("AP
 
 NMEAConfig Config = NMEAConfig();
 
-Relay Relay1 = Relay("Relay1", GPIO_NUM_22);
-Relay Relay2 = Relay("Relay2", GPIO_NUM_21);
-Relay Relay3 = Relay("Relay3", GPIO_NUM_17);
-Relay Relay4 = Relay("Relay4", GPIO_NUM_16);
+Relay Relay1 = Relay("Relay1", -1);
+Relay Relay2 = Relay("Relay2", -1);
+Relay Relay3 = Relay("Relay3", -1);
+Relay Relay4 = Relay("Relay4", -1);
+Relay Relay5 = Relay("Relay5", -1);
+Relay Relay6 = Relay("Relay6", -1);
+Relay Relay7 = Relay("Relay7", -1);
+Relay Relay8 = Relay("Relay8", -1);
 
 class CustomHtmlFormatProvider : public iotwebconf::OptionalGroupHtmlFormatProvider {
 protected:
@@ -81,26 +85,7 @@ protected:
 };
 CustomHtmlFormatProvider customHtmlFormatProvider;
 
-class MyHtmlRootFormatProvider : public HtmlRootFormatProvider {
-protected:
-    virtual String getScriptInner() {
-        String s_ = HtmlRootFormatProvider::getScriptInner();
-        s_.replace("{millisecond}", "5000");
-        s_ += F("function updateData(jsonData) {\n");
-        s_ += F("   document.getElementById('RSSIValue').innerHTML = jsonData.rssi + \"dBm\" \n");
-
-
-        s_ += F("}\n");
-
-        return s_;
-    }
-};
-
-
-
 void webinit() {
-
-
     iotWebConf.setStatusPin(STATUS_PIN, ON_LEVEL);
     iotWebConf.setConfigPin(CONFIG_PIN);
     iotWebConf.setHtmlFormatProvider(&customHtmlFormatProvider);
@@ -110,6 +95,10 @@ void webinit() {
     Relay1.setNext(&Relay2);
     Relay2.setNext(&Relay3);
     Relay3.setNext(&Relay4);
+	Relay4.setNext(&Relay5);
+	Relay5.setNext(&Relay6);
+	Relay6.setNext(&Relay7);
+	Relay7.setNext(&Relay8);
 
     iotWebConf.addParameterGroup(&Config);
 
@@ -117,6 +106,10 @@ void webinit() {
     iotWebConf.addParameterGroup(&Relay2);
     iotWebConf.addParameterGroup(&Relay3);
     iotWebConf.addParameterGroup(&Relay4);
+	iotWebConf.addParameterGroup(&Relay5);
+	iotWebConf.addParameterGroup(&Relay6);
+	iotWebConf.addParameterGroup(&Relay7);
+	iotWebConf.addParameterGroup(&Relay8);  
 
     iotWebConf.setupUpdateServer(
         [](const char* updatePath) { AsyncUpdater.setup(&server, updatePath); },
@@ -126,6 +119,7 @@ void webinit() {
     iotWebConf.setWifiConnectionCallback(&wifiConnected);
 
     iotWebConf.getApTimeoutParameter()->visible = true;
+
     iotWebConf.init();
     convertParams();
 
@@ -141,14 +135,20 @@ void webinit() {
         request->send(response);
         }
     );
-    server.on("/data", HTTP_GET, [](AsyncWebServerRequest* request) { handleData(request); });
     server.onNotFound([](AsyncWebServerRequest* request) {
         AsyncWebRequestWrapper asyncWebRequestWrapper(request);
         iotWebConf.handleNotFound(&asyncWebRequestWrapper);
         }
     );
-
-
+    server.on("/data", HTTP_GET, [](AsyncWebServerRequest* request) { 
+        handleData(request); 
+        }
+    );
+    server.onNotFound([](AsyncWebServerRequest* request) {
+        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
+        iotWebConf.handleNotFound(&asyncWebRequestWrapper);
+        }
+    );
 
     if (APModeOfflineTime > 0) {
         APModeTimer.start(APModeOfflineTime * 60 * 1000);
@@ -185,7 +185,7 @@ void wifiConnected() {
 void convertParams() {
 
     N2KSource = Config.Source();
-    BankInstance = Config.BankInstance();
+    DeviceInstance = Config.DeviceID();
     RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
@@ -197,15 +197,85 @@ void configSaved() {
 }
 
 void handleData(AsyncWebServerRequest* request) {
-    AsyncJsonResponse* response = new AsyncJsonResponse();
-    response->addHeader("Server", "ESP Async Web Server");
-    JsonVariant& json_ = response->getRoot();
+    AsyncJsonResponse* response_ = new AsyncJsonResponse();
+    response_->addHeader("Server", "ESP Async Web Server");
+    JsonVariant& json_ = response_->getRoot();
     json_["rssi"] = WiFi.RSSI();
 
-    response->setLength();
-    request->send(response);
+    json_["DeviceID"] = DeviceInstance;
+    json_["RelayAddress"] = RelayAddress;
+
+    Relay* relay_ = &Relay1;
+    uint8_t i_ = 1;
+    while (relay_ != nullptr) {
+        if (relay_->isEnable()) {
+            json_["relay" + String(i_)] = "On";
+        } else {
+            json_["relay" + String(i_)] = "Off";
+        }
+
+        relay_ = (Relay*)relay_->getNext();
+        i_++;
+    }
+    response_->setLength();
+    request->send(response_);
 }
 
+class MyHtmlRootFormatProvider : public HtmlRootFormatProvider {
+public:
+    String getHtmlTableRowClass(String name, String htmlclass, String id) {
+        String s_ = F("<tr><td align=\"left\">{n}</td><td align=\"left\"><span id=\"{id}\" class=\"{c}\"></span></td></tr>\n");
+        s_.replace("{n}", name);
+        s_.replace("{c}", htmlclass);
+        s_.replace("{id}", id);
+        return s_;
+    }
+
+protected:
+    virtual String getStyleInner() {
+        String s_ = HtmlRootFormatProvider::getStyleInner();
+        s_ += F(".led {display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }\n");
+        s_ += F(".led.off {background-color: grey;}\n");
+        s_ += F(".led.on {background-color: green;}\n");
+        s_ += F(".led.delayedoff {background-color: orange;}\n");
+        return s_;
+    }
+
+    virtual String getScriptInner() {
+        String s_ = HtmlRootFormatProvider::getScriptInner();
+
+        s_.replace("{millisecond}", "5000");
+ 
+        s_ += F("function updateLED(element, status) {\n");
+        s_ += F("   if (element) {\n");
+        s_ += F("       element.classList.remove('on', 'off', 'delayedoff');\n");
+        s_ += F("       element.classList.add(status);\n");
+        s_ += F("   }\n");
+        s_ += F("}\n");
+
+        s_ += F("function updateData(jsonData) {\n");
+        s_ += F("   document.getElementById('RSSIValue').innerHTML = jsonData.rssi + \"dBm\" \n");
+
+        s_ += F("   updateLED(document.getElementById('relay1'), jsonData.Relays.relay1.toLowerCase());\n");
+        s_ += F("   updateLED(document.getElementById('relay2'), jsonData.Relays.relay2.toLowerCase());\n");
+        s_ += F("   updateLED(document.getElementById('relay3'), jsonData.Relays.relay3.toLowerCase());\n");
+        s_ += F("   updateLED(document.getElementById('relay4'), jsonData.Relays.relay4.toLowerCase());\n");
+
+        Relay* relay_ = &Relay1;
+        uint8_t i_ = 1;
+        while (relay_ != nullptr) {
+            if (relay_->isActive()) {
+                s_ += "   updateLED(document.getElementById('relay" + String(i_) + "'), jsonData.relay" + String(i_) + ".toLowerCase());\n";
+            }
+            relay_ = (Relay*)relay_->getNext();
+            i_++;
+        }
+
+        s_ += F("}\n");
+
+        return s_;
+    }
+};
 
 void handleRoot(AsyncWebServerRequest* request) {
     AsyncWebRequestWrapper asyncWebRequestWrapper(request);
@@ -231,7 +301,20 @@ void handleRoot(AsyncWebServerRequest* request) {
     content_ += fp_.getHtmlTableEnd().c_str();
     content_ += fp_.getHtmlFieldsetEnd().c_str();
 
- 
+    content_ += fp_.getHtmlFieldset("Relays").c_str();
+    content_ += fp_.getHtmlTable().c_str();
+    Relay* relay_ = &Relay1;
+    uint8_t i_ = 1;
+    while (relay_ != nullptr) {
+		if (relay_->isActive()) {
+			content_ += fp_.getHtmlTableRowClass(String(relay_->label) + ":", "led off", "relay" + String(i_)).c_str();
+		}
+
+        relay_ = (Relay*)relay_->getNext();
+        i_++;
+    }
+    content_ += fp_.getHtmlTableEnd().c_str();
+    content_ += fp_.getHtmlFieldsetEnd().c_str();
 
     content_ += fp_.getHtmlFieldset("Network").c_str();
     content_ += fp_.getHtmlTable().c_str();
@@ -244,7 +327,7 @@ void handleRoot(AsyncWebServerRequest* request) {
 
     content_ += fp_.getHtmlTable().c_str();
     content_ += fp_.getHtmlTableRowText("Go to <a href = 'config'>configure page</a> to change configuration.").c_str();
-    content_ += fp_.getHtmlTableRowText("Go to <a href = 'webserial'>sensor monitoring</a> page.").c_str();
+    //content_ += fp_.getHtmlTableRowText("Go to <a href = 'webserial'>sensor monitoring</a> page.").c_str();
     content_ += fp_.getHtmlTableRowText(fp_.getHtmlVersion(Version)).c_str();
     content_ += fp_.getHtmlTableEnd().c_str();
 

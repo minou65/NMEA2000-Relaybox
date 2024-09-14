@@ -45,7 +45,7 @@ public:
 
     uint8_t Instance() { return atoi(InstanceValue); };
     uint8_t SID() { return atoi(SIDValue); };
-    uint8_t BankInstance() { return atoi(BankValue); };
+    uint8_t DeviceID() { return atoi(BankValue); };
     uint8_t RelayAddress() { return atoi(RelayValue); };
     uint8_t Source() { return atoi(SourceValue); };
 
@@ -123,16 +123,13 @@ public:
         return _Status;
     }
 
-//    void setNext(Relay* nextGroup) { this->nextGroup = nextGroup; nextGroup->prevGroup = this; };
-//    Relay* getNext() { return this->nextGroup; };
-//
-//protected:
-//    Relay* prevGroup = nullptr;
-//    Relay* nextGroup = nullptr;
+	bool isEnable() {
+        return Status() == N2kOnOff_On;
+	}
 
 private:
 
-    iotwebconf::NumberParameter gpioParam = iotwebconf::NumberParameter("GPIO", _gpioID, _gpioValue, NUMBER_LEN, "-1", "0..255", "min='0' max='255' step='1'");
+    iotwebconf::NumberParameter gpioParam = iotwebconf::NumberParameter("GPIO", _gpioID, _gpioValue, NUMBER_LEN, "-1", "0..255", "min='-1' max='255' step='1'");
     iotwebconf::NumberParameter offParam = iotwebconf::NumberParameter("Off Time", _offID, _offValue, NUMBER_LEN, "0", "0..3000", "min='0' max='3000' step='1'");
 
     uint8_t GPIO() { return atoi(_gpioValue); };
@@ -147,6 +144,14 @@ private:
 
 	Neotimer OffTimer = Neotimer();
 };
+extern Relay Relay1;
+extern Relay Relay2;
+extern Relay Relay3;
+extern Relay Relay4;
+extern Relay Relay5;
+extern Relay Relay6;
+extern Relay Relay7;
+extern Relay Relay8;
 
 
 

@@ -9,7 +9,7 @@
 	#include "WProgram.h"
 #endif
 
-#define MAX_RELAYS 4
+#define MAX_RELAYS 8
 
 
 extern bool debugMode;
@@ -23,7 +23,7 @@ extern bool ChangedConfiguration;
 extern bool SaveConfiguration;
 
 extern uint8_t N2KSource;
-extern uint8_t BankInstance;
+extern uint8_t DeviceInstance;
 extern uint8_t RelayAddress;
 
 extern char Version[];
