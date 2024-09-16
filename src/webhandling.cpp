@@ -21,6 +21,11 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
+#if ESP32
+// Liste der gültigen Pins für ESP32
+const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
+#endif
+
 
 // -- Configuration specific key. The value should be modified if config structure was changed.
 #define CONFIG_VERSION "A1"
@@ -48,6 +53,7 @@ const char thingName[] = "NMEA2000-Relaybox";
 // -- Method declarations.
 void handleData(AsyncWebServerRequest* request);
 void handleRoot(AsyncWebServerRequest* request);
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper);
 void convertParams();
 
 // -- Callback methods.
@@ -117,6 +123,7 @@ void webinit() {
 
     iotWebConf.setConfigSavedCallback(&configSaved);
     iotWebConf.setWifiConnectionCallback(&wifiConnected);
+    iotWebConf.setFormValidator(&formValidator);
 
     iotWebConf.getApTimeoutParameter()->visible = true;
 
@@ -180,6 +187,33 @@ void webLoop() {
 
 void wifiConnected() {
     ArduinoOTA.begin();
+}
+
+bool isValidPin(int pin) {
+    for (int validPin : validPins) {
+        if (pin == validPin) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper){
+    Serial.println("Validating form.");
+    bool valid_ = true;
+
+    Relay* relay_ = &Relay1;
+    while (relay_ != nullptr) {
+		if (relay_->isActive()) {
+			int pin_ = relay_->GPIO();
+			if (!isValidPin(pin_)) {
+				relay_->gpioParam.errorMessage = "Invalid pin number";
+				valid_ = false;
+			}
+		}
+		relay_ = (Relay*)relay_->getNext();
+	}
+    return valid_;
 }
 
 void convertParams() {
