@@ -190,8 +190,8 @@ void wifiConnected() {
 }
 
 bool isValidPin(int pin) {
-    for (int validPin : validPins) {
-        if (pin == validPin) {
+    for (int validPin_ : validPins) {
+        if (pin == validPin_) {
             return true;
         }
     }
