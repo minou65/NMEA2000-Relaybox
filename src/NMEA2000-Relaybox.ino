@@ -26,7 +26,6 @@ bool ChangedConfiguration = false;
 char Version[] = VERSION_STR; // Manufacturer's Software version code
 
 tN2kSyncScheduler SwitchBankStatusScheduler(false, 2000, 500);
-Neotimer WDtimer = Neotimer((WDT_TIMEOUT + 1) * 1000);
 
 // List here messages your device will transmit.
 const unsigned long TransmitMessages[] PROGMEM = {
@@ -88,11 +87,8 @@ void setup() {
 
     NMEA2000.Open();
 
-    //esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
-    //esp_task_wdt_add(NULL); //add current thread to WDT watch
-
-    WDtimer.start();
-
+    esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+    esp_task_wdt_add(NULL); //add current thread to WDT watch
     Serial.println("device initilized");
 }
 
@@ -116,9 +112,7 @@ void loop() {
 
     ChangedConfiguration = false;
 
-    if (WDtimer.repeat()) {
-        esp_task_wdt_reset();
-    }
+    esp_task_wdt_reset();
 }
 
 void ControlRelay(tN2kOnOff state, Relay* relay) {
