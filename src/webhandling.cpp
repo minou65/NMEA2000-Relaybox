@@ -199,29 +199,26 @@ bool isValidPin(int pin) {
 }
 
 bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
-    Serial.println("Validating form.");
-    bool _valid = true;
 
-    Relay* _relay = &Relay1;
-    while (_relay != nullptr) {
-        if (_relay->isActive()) {
-            int _pin = _relay->GPIO();
-            if (!isValidPin(_pin)) {
-                String _errorMessage = "Invalid pin number. Allowed pins: ";
-                for (int _i = 0; _i < sizeof(validPins) / sizeof(validPins[0]); _i++) {
-                    _errorMessage += String(validPins[_i]);
-                    if (_i < sizeof(validPins) / sizeof(validPins[0]) - 1) {
-                        _errorMessage += ", ";
-                    }
-                }
-                _relay->gpioParam.errorMessage = _errorMessage.c_str();
-                _valid = false;
+    bool valid_ = true;
+
+    Relay* relay_ = &Relay1;
+    while (relay_ != nullptr) {
+        if (relay_->isActive()) {
+
+            uint8_t pin_ = atoi(webRequestWrapper->arg(relay_->gpioParam.getId()).c_str());
+            
+            Serial.println("Validating pin " + String(pin_));
+
+            if (!isValidPin(pin_)) {
+                relay_->gpioParam.errorMessage = "Invalid pin number. See esp32 documentation";
+                valid_ = false;
             }
         }
-        _relay = (Relay*)_relay->getNext();
+        relay_ = (Relay*)relay_->getNext();
     }
 
-    return _valid;
+    return valid_;
 }
 
 void convertParams() {
