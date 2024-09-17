@@ -198,22 +198,30 @@ bool isValidPin(int pin) {
     return false;
 }
 
-bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper){
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
     Serial.println("Validating form.");
-    bool valid_ = true;
+    bool _valid = true;
 
-    Relay* relay_ = &Relay1;
-    while (relay_ != nullptr) {
-		if (relay_->isActive()) {
-			int pin_ = relay_->GPIO();
-			if (!isValidPin(pin_)) {
-				relay_->gpioParam.errorMessage = "Invalid pin number";
-				valid_ = false;
-			}
-		}
-		relay_ = (Relay*)relay_->getNext();
-	}
-    return valid_;
+    Relay* _relay = &Relay1;
+    while (_relay != nullptr) {
+        if (_relay->isActive()) {
+            int _pin = _relay->GPIO();
+            if (!isValidPin(_pin)) {
+                String _errorMessage = "Invalid pin number. Allowed pins: ";
+                for (int _i = 0; _i < sizeof(validPins) / sizeof(validPins[0]); _i++) {
+                    _errorMessage += String(validPins[_i]);
+                    if (_i < sizeof(validPins) / sizeof(validPins[0]) - 1) {
+                        _errorMessage += ", ";
+                    }
+                }
+                _relay->gpioParam.errorMessage = _errorMessage.c_str();
+                _valid = false;
+            }
+        }
+        _relay = (Relay*)_relay->getNext();
+    }
+
+    return _valid;
 }
 
 void convertParams() {
