@@ -21,6 +21,11 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
+#if ESP32
+// Liste der gültigen Pins für ESP32
+const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
+#endif
+
 
 // -- Configuration specific key. The value should be modified if config structure was changed.
 #define CONFIG_VERSION "A1"
@@ -48,6 +53,7 @@ const char thingName[] = "NMEA2000-Relaybox";
 // -- Method declarations.
 void handleData(AsyncWebServerRequest* request);
 void handleRoot(AsyncWebServerRequest* request);
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper);
 void convertParams();
 
 // -- Callback methods.
@@ -117,6 +123,7 @@ void webinit() {
 
     iotWebConf.setConfigSavedCallback(&configSaved);
     iotWebConf.setWifiConnectionCallback(&wifiConnected);
+    iotWebConf.setFormValidator(&formValidator);
 
     iotWebConf.getApTimeoutParameter()->visible = true;
 
@@ -180,6 +187,41 @@ void webLoop() {
 
 void wifiConnected() {
     ArduinoOTA.begin();
+}
+
+bool isValidPin(int pin) {
+    for (int validPin_ : validPins) {
+        if (pin == validPin_) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
+    Serial.println("Validating form.");
+    bool _valid = true;
+
+    Relay* _relay = &Relay1;
+    while (_relay != nullptr) {
+        if (_relay->isActive()) {
+            int _pin = _relay->GPIO();
+            if (!isValidPin(_pin)) {
+                String _errorMessage = "Invalid pin number. Allowed pins: ";
+                for (int _i = 0; _i < sizeof(validPins) / sizeof(validPins[0]); _i++) {
+                    _errorMessage += String(validPins[_i]);
+                    if (_i < sizeof(validPins) / sizeof(validPins[0]) - 1) {
+                        _errorMessage += ", ";
+                    }
+                }
+                _relay->gpioParam.errorMessage = _errorMessage.c_str();
+                _valid = false;
+            }
+        }
+        _relay = (Relay*)_relay->getNext();
+    }
+
+    return _valid;
 }
 
 void convertParams() {

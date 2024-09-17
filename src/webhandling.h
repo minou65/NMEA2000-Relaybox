@@ -102,6 +102,8 @@ public:
 		}
     }
 
+    int8_t GPIO() { return atoi(_gpioValue); };
+
     void On() {
         uint8_t gpio_ = GPIO();
         if ((gpio_ == 255)) return;
@@ -127,12 +129,11 @@ public:
         return Status() == N2kOnOff_On;
 	}
 
-private:
-
     iotwebconf::NumberParameter gpioParam = iotwebconf::NumberParameter("GPIO", _gpioID, _gpioValue, NUMBER_LEN, "-1", "0..255", "min='-1' max='255' step='1'");
     iotwebconf::NumberParameter offParam = iotwebconf::NumberParameter("Off Time", _offID, _offValue, NUMBER_LEN, "0", "0..3000", "min='0' max='3000' step='1'");
 
-    uint8_t GPIO() { return atoi(_gpioValue); };
+
+private:
 
     char _gpioValue[NUMBER_LEN];
     char _gpioID[STRING_LEN];
