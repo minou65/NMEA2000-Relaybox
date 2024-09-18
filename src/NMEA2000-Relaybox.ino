@@ -16,8 +16,8 @@ void HandleSwitchbankControl(const tN2kMsg& N2kMsg);
 void SendSwitchBankStatus();
 
 uint8_t N2KSource = 22;
-uint8_t DeviceInstance = 1;
-uint8_t RelayAddress = 1;
+uint8_t DeviceInstance = 0;
+uint8_t RelayAddress = 0;
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
 
@@ -136,7 +136,7 @@ void HandleSwitchbankControl(const tN2kMsg& N2kMsg) {
 		uint8_t _index = 0;
 		while (_relay != nullptr) {
             if (_relay->isActive()) {
-                tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BinaryStatus, _index + (RelayAddress - 1));
+                tN2kOnOff _ItemStatus = N2kGetStatusOnBinaryStatus(_BinaryStatus, _index + (RelayAddress));
 
                 if (_ItemStatus != _relay->Status()) {
                     ControlRelay(_ItemStatus, _relay);
@@ -163,7 +163,7 @@ void SendSwitchBankStatus() {
 	while (_relay != nullptr) {
 		if (_relay->isActive()) {
 			tN2kOnOff _ItemStatus = _relay->Status();
-			N2kSetStatusBinaryOnStatus(_BinaryStatus, _ItemStatus, _index + (RelayAddress - 1));
+			N2kSetStatusBinaryOnStatus(_BinaryStatus, _ItemStatus, _index + (RelayAddress));
 		}
 
 		_relay = (Relay*)_relay->getNext();

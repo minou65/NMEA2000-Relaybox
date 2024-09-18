@@ -224,8 +224,8 @@ bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
 void convertParams() {
 
     N2KSource = Config.Source();
-    DeviceInstance = Config.DeviceID();
-    RelayAddress = Config.RelayAddress();
+    DeviceInstance = Config.DeviceID() - 1;
+    RelayAddress = Config.RelayAddress() - 1;
 
     APModeOfflineTime = atoi(APModeOfflineValue);
 }
