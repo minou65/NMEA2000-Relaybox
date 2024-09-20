@@ -29,7 +29,7 @@ extern uint8_t RelayAddress;
 extern char Version[];
 
 #define STRING_LEN 40
-#define NUMBER_LEN 32
+#define NUMBER_LEN 10
 
 
 #endif
