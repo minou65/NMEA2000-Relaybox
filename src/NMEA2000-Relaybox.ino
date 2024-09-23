@@ -29,7 +29,12 @@ tN2kSyncScheduler SwitchBankStatusScheduler(false, 2000, 500);
 
 // List here messages your device will transmit.
 const unsigned long TransmitMessages[] PROGMEM = {
-    127501L, // Temperature
+    127501L,
+    0
+};
+
+const unsigned long ReciveMessages[] PROGMEM = {
+    127502L,
     0
 };
 
@@ -79,8 +84,9 @@ void setup() {
     NMEA2000.SetN2kSource(N2KSource);
     NMEA2000.EnableForward(false);
 
-    // Here we tell library, which PGNs we transmit
+    // Here we tell library, which PGNs we transmit and recive
     NMEA2000.ExtendTransmitMessages(TransmitMessages);
+    NMEA2000.ExtendReceiveMessages(ReciveMessages);
 
     NMEA2000.SetOnOpen(OnN2kOpen);
     NMEA2000.SetMsgHandler(HandleSwitchbankControl);
@@ -169,6 +175,7 @@ void SendSwitchBankStatus() {
 		_relay = (Relay*)_relay->getNext();
 		_index++;
 	}
-
+    Serial.println("SendSwitchBankStatus");
     SetN2kBinaryStatus(_N2kMsg, DeviceInstance, _BinaryStatus);
+    NMEA2000.SendMsg(_N2kMsg);
 }
