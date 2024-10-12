@@ -18,8 +18,6 @@
 #include <IotWebConfAsyncClass.h>
 #include <IotWebConfAsyncUpdateServer.h>
 #include <IotWebRoot.h>
-#include <AsyncJson.h>
-#include <ArduinoJson.h>
 
 #if ESP32
 // Liste der gültigen Pins für ESP32
@@ -183,6 +181,12 @@ void webLoop() {
         iotWebConf.goOffLine();
         APModeTimer.stop();
     }
+
+    if (AsyncUpdater.isFinished()) {
+        Serial.println(F("Firmware update finished"));
+        delay(1000);
+        ESP.restart();
+    }
 }
 
 void wifiConnected() {
@@ -236,28 +240,22 @@ void configSaved() {
 }
 
 void handleData(AsyncWebServerRequest* request) {
-    AsyncJsonResponse* response_ = new AsyncJsonResponse();
-    response_->addHeader("Server", "ESP Async Web Server");
-    JsonVariant& json_ = response_->getRoot();
-    json_["rssi"] = WiFi.RSSI();
 
-    json_["DeviceID"] = DeviceInstance;
-    json_["RelayAddress"] = RelayAddress;
-
-    Relay* relay_ = &Relay1;
-    uint8_t i_ = 1;
-    while (relay_ != nullptr) {
-        if (relay_->isEnable()) {
-            json_["relay" + String(i_)] = "On";
-        } else {
-            json_["relay" + String(i_)] = "Off";
-        }
-
-        relay_ = (Relay*)relay_->getNext();
-        i_++;
-    }
-    response_->setLength();
-    request->send(response_);
+	String json_ = "{";
+	json_ += "\"rssi\":" + String(WiFi.RSSI()) + ",";
+	json_ += "\"Relays\":{";
+	Relay* relay_ = &Relay1;
+	uint8_t i_ = 1;
+	while (relay_ != nullptr) {
+		if (relay_->isActive()) {
+			json_ += "\"relay" + String(i_) + "\":\"" + (relay_->isEnable() ? "On" : "Off") + "\",";
+		}
+		relay_ = (Relay*)relay_->getNext();
+		i_++;
+	}
+	json_ += "}";
+	json_ += "}";
+	request->send(200, "application/json", json_);
 }
 
 class MyHtmlRootFormatProvider : public HtmlRootFormatProvider {
