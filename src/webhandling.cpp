@@ -229,7 +229,7 @@ void convertParams() {
 
     N2KSource = Config.Source();
     DeviceInstance = Config.DeviceID() - 1;
-    RelayAddress = Config.RelayAddress() - 1;
+    RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
 }

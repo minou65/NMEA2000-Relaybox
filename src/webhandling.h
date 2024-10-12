@@ -59,8 +59,8 @@ public:
 private:
     //iotwebconf::NumberParameter InstanceParam = iotwebconf::NumberParameter("Instance", instanceID, InstanceValue, NUMBER_LEN, "255", "1..255", "min='1' max='254' step='1'");
     //iotwebconf::NumberParameter SIDParam = iotwebconf::NumberParameter("SID", sidID, SIDValue, NUMBER_LEN, "255", "1..255", "min='1' max='255' step='1'");
-    iotwebconf::NumberParameter BankParam = iotwebconf::NumberParameter("Device Address", instanceBank, RelayValue, NUMBER_LEN, "1", "1..254", "min='1' max='254' step='1'");
-    iotwebconf::NumberParameter RelayParam = iotwebconf::NumberParameter("Relay Address", addressRelay, BankValue, NUMBER_LEN, "1", "1..28", "min='1' max='28' step='1'");
+    iotwebconf::NumberParameter BankParam = iotwebconf::NumberParameter("Device Address", instanceBank, BankValue, NUMBER_LEN, "1", "1..254", "min='1' max='254' step='1'");
+    iotwebconf::NumberParameter RelayParam = iotwebconf::NumberParameter("Relay Address", addressRelay, RelayValue, NUMBER_LEN, "1", "1..28", "min='1' max='28' step='1'");
     iotwebconf::NumberParameter SourceParam = iotwebconf::NumberParameter("Source", sourceID, SourceValue, NUMBER_LEN, "22", nullptr, nullptr);
 
     //char InstanceValue[NUMBER_LEN];
