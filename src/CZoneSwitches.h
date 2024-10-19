@@ -12,15 +12,7 @@
 #include <N2kMessages.h>
 #include <N2kTimer.h>
 
-
-#define CZoneMessage 0x9927 // 295 + reserved + industry code=marine
-#define CzSwitchBank1SerialNum  0x1d // Serial Number switches 1-4 (00260128)
-#define CzSwitchBank2SerialNum  0x1b // Serial Number switches 5-8  (00260126)
-#define CzDipSwitch     200 //  CZone Dip switch value, CZone address
-#define BinaryDeviceInstance 0x00 // Instance of 127501 switch state message
-#define SwitchBankInstance 0x00   //Instance of 127502 change switch state message
-#define NumberOfSwitches 8   // change to 4 for bit switch bank
-
+extern void SetOutput(uint8_t output, bool state);
 
 void CZoneSetup();
 void CZoneOpen();
