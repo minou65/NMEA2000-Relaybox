@@ -23,7 +23,7 @@ extern bool ChangedConfiguration;
 extern bool SaveConfiguration;
 
 extern uint8_t N2KSource;
-extern uint8_t DeviceInstance;
+extern uint8_t BinaryDeviceInstance;
 extern uint8_t RelayAddress;
 
 extern char Version[];
