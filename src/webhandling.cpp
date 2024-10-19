@@ -228,7 +228,7 @@ bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
 void convertParams() {
 
     N2KSource = Config.Source();
-    DeviceInstance = Config.DeviceID() - 1;
+    BinaryDeviceInstance = Config.DeviceID() - 1;
     RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
@@ -242,18 +242,16 @@ void configSaved() {
 void handleData(AsyncWebServerRequest* request) {
 
 	String json_ = "{";
-	json_ += "\"rssi\":" + String(WiFi.RSSI()) + ",";
-	json_ += "\"Relays\":{";
+	json_ += "\"rssi\":" + String(WiFi.RSSI()) ;
 	Relay* relay_ = &Relay1;
 	uint8_t i_ = 1;
 	while (relay_ != nullptr) {
 		if (relay_->isActive()) {
-			json_ += "\"relay" + String(i_) + "\":\"" + (relay_->isEnable() ? "On" : "Off") + "\",";
+			json_ += ",\"relay" + String(i_) + "\":\"" + (relay_->isEnable() ? "On" : "Off") + "\"";
 		}
 		relay_ = (Relay*)relay_->getNext();
 		i_++;
 	}
-	json_ += "}";
 	json_ += "}";
 	request->send(200, "application/json", json_);
 }
@@ -271,9 +269,10 @@ public:
 protected:
     virtual String getStyleInner() {
         String s_ = HtmlRootFormatProvider::getStyleInner();
-        s_ += F(".led {display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }\n");
+        s_ += F(".led {display: inline-block; width: 15px; height: 15px; border-radius: 50%; margin-right: 5px; }\n");
         s_ += F(".led.off {background-color: grey;}\n");
-        s_ += F(".led.on {background-color: green;}\n");
+        //s_ += F(".led.on {background-color: green;}\n");
+        s_ += F(".led.on {background-color: #00FF00;}\n"); // Leuchtendes Grün
         s_ += F(".led.delayedoff {background-color: orange;}\n");
         return s_;
     }
@@ -281,7 +280,7 @@ protected:
     virtual String getScriptInner() {
         String s_ = HtmlRootFormatProvider::getScriptInner();
 
-        s_.replace("{millisecond}", "5000");
+        s_.replace("{millisecond}", "1000");
  
         s_ += F("function updateLED(element, status) {\n");
         s_ += F("   if (element) {\n");
@@ -292,11 +291,6 @@ protected:
 
         s_ += F("function updateData(jsonData) {\n");
         s_ += F("   document.getElementById('RSSIValue').innerHTML = jsonData.rssi + \"dBm\" \n");
-
-        s_ += F("   updateLED(document.getElementById('relay1'), jsonData.Relays.relay1.toLowerCase());\n");
-        s_ += F("   updateLED(document.getElementById('relay2'), jsonData.Relays.relay2.toLowerCase());\n");
-        s_ += F("   updateLED(document.getElementById('relay3'), jsonData.Relays.relay3.toLowerCase());\n");
-        s_ += F("   updateLED(document.getElementById('relay4'), jsonData.Relays.relay4.toLowerCase());\n");
 
         Relay* relay_ = &Relay1;
         uint8_t i_ = 1;
