@@ -19,28 +19,44 @@
 #include <IotWebConfAsyncUpdateServer.h>
 #include <IotWebRoot.h>
 
-#if ESP32
-// Liste der gültigen Pins für ESP32
-const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
-#endif
 
 
-// -- Configuration specific key. The value should be modified if config structure was changed.
-#define CONFIG_VERSION "A1"
-
-// -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
-//      password to buld an AP. (E.g. in case of lost password)
-#define CONFIG_PIN  GPIO_NUM_13
 
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
 //      when connected to the Wifi it will turn off (kept HIGH).
+#if defined(ARDUINO_ESP32_DEV)
+
 #define STATUS_PIN LED_BUILTIN
+
+// Liste der g ltigen Pins f r ESP32
+const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
+
+// -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
+//      password to buld an AP. (E.g. in case of lost password)
+#define CONFIG_PIN  GPIO_NUM_19
+
+#elif defined(ARDUINO_ESP32_WROOM_DA)
+
+#define STATUS_PIN GPIO_NUM_23
+
+// Liste der g ltigen Pins f r ESP32
+const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
+
+// -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
+//      password to buld an AP. (E.g. in case of lost password)
+#define CONFIG_PIN  GPIO_NUM_19
+
+#endif
+
 #if ESP32 
 #define ON_LEVEL HIGH
 #else
 #define ON_LEVEL LOW
 #endif
+
+// -- Configuration specific key. The value should be modified if config structure was changed.
+#define CONFIG_VERSION "A1"
 
 uint8_t APModeOfflineTime = 0;
 Neotimer APModeTimer = Neotimer();
@@ -272,7 +288,7 @@ protected:
         s_ += F(".led {display: inline-block; width: 15px; height: 15px; border-radius: 50%; margin-right: 5px; }\n");
         s_ += F(".led.off {background-color: grey;}\n");
         //s_ += F(".led.on {background-color: green;}\n");
-        s_ += F(".led.on {background-color: #00FF00;}\n"); // Leuchtendes Grün
+        s_ += F(".led.on {background-color: #00FF00;}\n"); // Leuchtendes Grï¿½n
         s_ += F(".led.delayedoff {background-color: orange;}\n");
         return s_;
     }
