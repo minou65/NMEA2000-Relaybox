@@ -41,17 +41,31 @@ void loop() {
 
     ChangedConfiguration = false;
 
+    Relay* relay_ = &Relay1;
+    while (relay_ != nullptr) {
+		if (relay_->isActive()) {
+			relay_->process();
+            if (relay_->isEnable()){
+				//SetOutput(relay_->getOutput(), true);
+			}
+			else {
+				//SetOutput(relay_->getOutput(), false);
+			}
+		}
+		relay_ = (Relay*)relay_->getNext();
+	}
+
     esp_task_wdt_reset();
 }
 
-void SetOutput(uint8_t output, bool state) {
+void SetCZRelayOutput(uint8_t output, bool ItemStatus) {
     Relay* relay_ = &Relay1;
 	uint8_t relayIndex_ = 1
         ;
     while (relay_ != nullptr) {
         if (relay_->isActive()) {
             if (relayIndex_ == output) {
-                if (state) {
+                if (ItemStatus) {
                     relay_->On();
                 }
                 else {

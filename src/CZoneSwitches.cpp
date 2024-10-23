@@ -155,7 +155,7 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
     String status_ = ItemStatus == N2kOnOff_On ? "On" : "Off";
     DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, status_.c_str());
 
-	SetOutput(SwitchIndex, ItemStatus);
+    SetCZRelayOutput(SwitchIndex, ItemStatus);
 
     //send out change and status to other N2k devices on network
     SendCZoneSwitchState127501(BinaryDeviceInstance);
@@ -532,5 +532,9 @@ void ParseN2kPGN127502(const tN2kMsg& N2kMsg) {
 
 }
 
+
+void SendCZSwitchStatus(uint8_t SwitchIndex, bool ItemStatus) {
+    SetChangeSwitchState(SwitchIndex, ItemStatus);
+}
 
 
