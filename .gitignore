@@ -406,3 +406,4 @@ FodyWeavers.xsd
 /src/NMEA2000-FluidLevel.ino.nodemcu-32s.bin
 src/board.txt
 src/NMEA2000-Relaybox.ino.nodemcu-32s.bin
+src/NMEA2000-Relaybox.ino.esp32da.bin
