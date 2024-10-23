@@ -129,6 +129,14 @@ public:
         return Status() == N2kOnOff_On;
 	}
 
+	bool isTimerDone() {
+		return OffTimer.done();
+	}
+
+    uint16_t offTime() {
+        return atoi(_offValue);
+    };
+
     iotwebconf::NumberParameter gpioParam = iotwebconf::NumberParameter("GPIO", _gpioID, _gpioValue, NUMBER_LEN, "-1", "0..255", "min='-1' max='255' step='1'");
     iotwebconf::NumberParameter offParam = iotwebconf::NumberParameter("Off Time", _offID, _offValue, NUMBER_LEN, "0", "0..3000", "min='0' max='3000' step='1'");
 
