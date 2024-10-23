@@ -40,19 +40,17 @@ void loop() {
 	CZoneLoop();
 
     ChangedConfiguration = false;
-
+	uint8_t output_ = 1;
     Relay* relay_ = &Relay1;
     while (relay_ != nullptr) {
 		if (relay_->isActive()) {
 			relay_->process();
-            if (relay_->isEnable()){
-				//SetOutput(relay_->getOutput(), true);
-			}
-			else {
-				//SetOutput(relay_->getOutput(), false);
+            if ((relay_->offTime() > 0) && (relay_->isTimerDone())) {
+				SendCZSwitchStatus(output_, false);
 			}
 		}
 		relay_ = (Relay*)relay_->getNext();
+		output_++;
 	}
 
     esp_task_wdt_reset();
