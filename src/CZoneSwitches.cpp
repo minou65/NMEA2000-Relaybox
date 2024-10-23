@@ -86,7 +86,8 @@ void CZoneSetup() {
         100, // Manufacturer's product code
         "Relaybox",  // Manufacturer's Model ID
         Version,  // Manufacturer's Software version code
-        Version // Manufacturer's Model version
+        Version, // Manufacturer's Model version
+        3 // Load Equivalency
     );
 
     NMEA2000.SetDeviceInformation(
