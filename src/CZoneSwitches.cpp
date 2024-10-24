@@ -16,6 +16,7 @@ bool debugMode = true;
 uint8_t BinaryDeviceInstance = 1; // Instance of 127501 switch state message
 uint8_t SwitchBankInstance = 1;   //Instance of 127502 change switch state message
 uint8_t N2KSource = 22;
+uint8_t N2KSID = 255;
 uint8_t RelayAddress = 1;
 
 #define CZoneMessage 0x9927 // 295 + reserved + industry code=marine
@@ -358,7 +359,7 @@ void SendCZoneSendConfigToMFD65290(unsigned char CzSwitchBankSerial, uint8_t CZo
     N2kMsg_.SetPGN(65290L);
     N2kMsg_.Priority = 7;
     N2kMsg_.Add2ByteUInt(CZoneMessage);
-    N2kMsg_.Destination = 255;
+    N2kMsg_.Destination = N2KSID;
     N2kMsg_.AddByte(CZoneConfig0);
     N2kMsg_.AddByte(CZoneConfig1);
     N2kMsg_.AddByte(CZoneConfig2);
@@ -400,7 +401,7 @@ void SendCZoneSwitchStateBroadcast130817(unsigned char CzSwitchBankSerialNum) {
     N2kMsg_.SetPGN(130817L);
     N2kMsg_.Priority = 7;
     N2kMsg_.Add2ByteUInt(CZoneMessage);
-    N2kMsg_.Destination = 255;
+    N2kMsg_.Destination = N2KSID;
     N2kMsg_.AddByte(0x01); // ?? maybe an "instance" value
     if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum) { // is it switch 1 to 4 or 5 to 8
         N2kMsg_.AddByte(CzSwitchBank1SerialNum);
