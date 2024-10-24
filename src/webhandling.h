@@ -28,14 +28,14 @@ extern IotWebConf iotWebConf;
 class NMEAConfig : public iotwebconf::ParameterGroup {
 public:
     NMEAConfig() : ParameterGroup("nmeaconfig", "NMEA configuration") {
-        //snprintf(instanceID, STRING_LEN, "%s-instance", this->getId());
-        //snprintf(sidID, STRING_LEN, "%s-sid", this->getId());
+        snprintf(instanceID, STRING_LEN, "%s-instance", this->getId());
+        snprintf(sidID, STRING_LEN, "%s-sid", this->getId());
         snprintf(sourceID, STRING_LEN, "%s-source", this->getId());
         snprintf(instanceBank, STRING_LEN, "%s-bank", this->getId());
         snprintf(addressRelay, STRING_LEN, "%s-releay", this->getId());
 
-        //this->addItem(&this->InstanceParam);
-        //this->addItem(&this->SIDParam);
+        this->addItem(&this->InstanceParam);
+        this->addItem(&this->SIDParam);
         this->addItem(&this->BankParam);
         this->addItem(&this->RelayParam);
 
@@ -43,8 +43,8 @@ public:
 
     }
 
-    //uint8_t Instance() { return atoi(InstanceValue); };
-    //uint8_t SID() { return atoi(SIDValue); };
+    uint8_t Instance() { return atoi(InstanceValue); };
+    uint8_t SID() { return atoi(SIDValue); };
     uint8_t DeviceID() { return atoi(BankValue); };
     uint8_t RelayAddress() { return atoi(RelayValue); };
     uint8_t Source() { return atoi(SourceValue); };
@@ -57,21 +57,21 @@ public:
 
 
 private:
-    //iotwebconf::NumberParameter InstanceParam = iotwebconf::NumberParameter("Instance", instanceID, InstanceValue, NUMBER_LEN, "255", "1..255", "min='1' max='254' step='1'");
-    //iotwebconf::NumberParameter SIDParam = iotwebconf::NumberParameter("SID", sidID, SIDValue, NUMBER_LEN, "255", "1..255", "min='1' max='255' step='1'");
+    iotwebconf::NumberParameter InstanceParam = iotwebconf::NumberParameter("Instance", instanceID, InstanceValue, NUMBER_LEN, "255", "1..255", "min='1' max='254' step='1'");
+    iotwebconf::NumberParameter SIDParam = iotwebconf::NumberParameter("SID", sidID, SIDValue, NUMBER_LEN, "255", "1..255", "min='1' max='255' step='1'");
     iotwebconf::NumberParameter BankParam = iotwebconf::NumberParameter("Device Address", instanceBank, BankValue, NUMBER_LEN, "1", "1..254", "min='1' max='254' step='1'");
     iotwebconf::NumberParameter RelayParam = iotwebconf::NumberParameter("Relay Address", addressRelay, RelayValue, NUMBER_LEN, "1", "1..28", "min='1' max='28' step='1'");
     iotwebconf::NumberParameter SourceParam = iotwebconf::NumberParameter("Source", sourceID, SourceValue, NUMBER_LEN, "22", nullptr, nullptr);
 
-    //char InstanceValue[NUMBER_LEN];
-    //char SIDValue[NUMBER_LEN];
+    char InstanceValue[NUMBER_LEN];
+    char SIDValue[NUMBER_LEN];
     char BankValue[NUMBER_LEN];
     char RelayValue[NUMBER_LEN];
     char SourceValue[NUMBER_LEN];
 
 
-    //char instanceID[STRING_LEN];
-    //char sidID[STRING_LEN];
+    char instanceID[STRING_LEN];
+    char sidID[STRING_LEN];
     char instanceBank[STRING_LEN];
     char addressRelay[STRING_LEN];
     char sourceID[STRING_LEN];
