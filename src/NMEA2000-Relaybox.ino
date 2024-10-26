@@ -38,14 +38,17 @@ void loop() {
 	N2kLoop();
 
     ChangedConfiguration = false;
+
 	uint8_t output_ = 1;
     Relay* relay_ = &Relay1;
     while (relay_ != nullptr) {
 		if (relay_->isActive()) {
-			relay_->process();
-            if ((relay_->offTime() > 0) && (relay_->isTimerDone())) {
+
+           if (relay_->isTimerDone()) {
+				Serial.printf("Relay %d Off\n", output_);
 				SendSwitchStatus(output_, false);
-			}
+		    }
+           relay_->process();
 		}
 		relay_ = (Relay*)relay_->getNext();
 		output_++;
@@ -59,7 +62,7 @@ void SetSwitchStatus(uint8_t output, bool ItemStatus) {
 	uint8_t relayIndex_ = 1;
     while (relay_ != nullptr) {
         if (relay_->isActive()) {
-            if (relayIndex_ == output) {
+			if (relayIndex_ == output) {
                 if (ItemStatus) {
                     relay_->On();
                 }
