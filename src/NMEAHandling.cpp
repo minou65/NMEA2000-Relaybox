@@ -141,10 +141,6 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
     SendSwitchBankCommand(BinaryDeviceInstance, SwitchIndex, ItemStatus);
 }
 
-void SetN2kSwitchBankCommand(tN2kMsg& N2kMsg, unsigned char DeviceBankInstance, tN2kBinaryStatus BankStatus){
-    SetN2kPGN127502(N2kMsg, DeviceBankInstance, BankStatus);
-}
-
 //************************************************************************************************************
 //  PGN127501 sent from the switching device to the network to inform of a change in switch state
 //  The message is sent in response to a change in switch state and is sent to all other devices on the network
@@ -164,18 +160,18 @@ void SendBinaryStatus(unsigned char DeviceInstance) {
 //************************************************************************************************************
 
 void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
-	//DEBUG_PRINTLN("SendSwitchBankCommand");
+	DEBUG_PRINTLN("SendSwitchBankCommand");
+	DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, ItemStatus == N2kOnOff_On ? "On" : "Off");
     tN2kMsg N2kMsg_;
-    tN2kBinaryStatus BinaryStatus_;
-    N2kResetBinaryStatus(BinaryStatus_);
-    N2kSetStatusBinaryOnStatus(BinaryStatus_, ItemStatus ? N2kOnOff_On : N2kOnOff_Off, SwitchIndex);
-    //send out to other N2k switching devices on network ( pgn 127502 )
-    SetN2kSwitchBankCommand(N2kMsg_, SwitchBankInstance, BinaryStatus_);
+	tN2kOnOff State_ = ItemStatus ? N2kOnOff_On : N2kOnOff_Off;
+    N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, SwitchIndex);
+	// PrintBinaryStatus(SwitchBankStatus);
+    SetN2kSwitchbankControl(N2kMsg_, SwitchBankInstance, SwitchBankStatus);
     NMEA2000.SendMsg(N2kMsg_);
 }
 
 void ParseSwitchBankCommand(const tN2kMsg& N2kMsg) {
-	//DEBUG_PRINTLN("ParseSwitchBankCommand");
+	DEBUG_PRINTLN("ParseSwitchBankCommand");
 
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);
