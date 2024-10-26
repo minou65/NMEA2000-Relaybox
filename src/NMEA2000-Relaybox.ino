@@ -10,8 +10,6 @@
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
 
-tN2kSyncScheduler SwitchBankStatusScheduler(false, 1000, 500);
-
 #define WDT_TIMEOUT 5
 
 char Version[] = VERSION_STR; // Manufacturer's Software version code
