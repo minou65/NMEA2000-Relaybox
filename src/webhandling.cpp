@@ -19,29 +19,26 @@
 #include <IotWebConfAsyncUpdateServer.h>
 #include <IotWebRoot.h>
 
-
-
-
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
 //      when connected to the Wifi it will turn off (kept HIGH).
-#if defined(ARDUINO_ESP32_DEV)
-
-#define STATUS_PIN LED_BUILTIN
-
-// Liste der g ltigen Pins f r ESP32
-const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
-
-// -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
-//      password to buld an AP. (E.g. in case of lost password)
-#define CONFIG_PIN  GPIO_NUM_19
-
-#elif defined(ARDUINO_ESP32_WROOM_DA)
+#if defined(ARDUINO_ESP32_WROOM_DA)
 
 #define STATUS_PIN GPIO_NUM_23
 
 // Liste der g ltigen Pins f r ESP32
 const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
+
+// -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
+//      password to buld an AP. (E.g. in case of lost password)
+#define CONFIG_PIN  GPIO_NUM_19
+
+#else
+
+#define STATUS_PIN LED_BUILTIN
+
+// Liste der g ltigen Pins f r ESP32
+const int validPins[] = { 0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39 };
 
 // -- When CONFIG_PIN is pulled to ground on startup, the Thing will use the initial
 //      password to buld an AP. (E.g. in case of lost password)
