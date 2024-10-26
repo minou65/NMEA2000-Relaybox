@@ -40,14 +40,12 @@ tNMEA2000Handler NMEA2000Handlers[] = {
 
 // List here messages your device will transmit.
 const unsigned long TransmitMessages[] PROGMEM = {
-    65283L,
     127501L,
     127502L,
     0
 };
 
 const unsigned long ReciveMessages[] PROGMEM = {
-    127501L,
     127502L,
     0
 };
@@ -166,7 +164,7 @@ void SendBinaryStatus(unsigned char DeviceInstance) {
 //************************************************************************************************************
 
 void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
-	DEBUG_PRINTLN("SendSwitchBankCommand");
+	//DEBUG_PRINTLN("SendSwitchBankCommand");
     tN2kMsg N2kMsg_;
     tN2kBinaryStatus BinaryStatus_;
     N2kResetBinaryStatus(BinaryStatus_);
@@ -177,7 +175,7 @@ void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bo
 }
 
 void ParseSwitchBankCommand(const tN2kMsg& N2kMsg) {
-	DEBUG_PRINTLN("ParseSwitchBankCommand");
+	//DEBUG_PRINTLN("ParseSwitchBankCommand");
 
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);
