@@ -24,7 +24,7 @@ uint8_t RelayAddress = 1;
 
 void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus);
 
-tN2kSyncScheduler CzUpdatePeriod127501(false, 1000, 500);
+tN2kSyncScheduler BinaryStatusTimer(false, 1000, 500);
 
 tN2kBinaryStatus SwitchBankStatus = 0;
 
@@ -34,7 +34,7 @@ typedef struct {
 } tNMEA2000Handler;
 
 tNMEA2000Handler NMEA2000Handlers[] = {
-    {127502L,ParseN2kPGN127502},
+    {127502L,ParseSwitchBankCommand},
     {0,0}
 };
 
@@ -61,7 +61,7 @@ void PrintBinaryStatus(tN2kBinaryStatus status) {
     Serial.printf("DisplayStatus: %s\n", buffer);
 }
 
-void CZoneSetup() {
+void N2kBegin() {
     uint8_t chipid_[6];
     uint32_t id_ = 0;
 
@@ -99,22 +99,22 @@ void CZoneSetup() {
     NMEA2000.ExtendTransmitMessages(TransmitMessages);
     NMEA2000.ExtendReceiveMessages(ReciveMessages);
 
-    NMEA2000.SetOnOpen(CZoneOpen);
-    NMEA2000.SetMsgHandler(CZoneHandleMessage);
+    NMEA2000.SetOnOpen(N2kOpen);
+    NMEA2000.SetMsgHandler(HandleN2kMessages);
 
     NMEA2000.Open();
 }
 
-void CZoneOpen() {
-	CzUpdatePeriod127501.UpdateNextTime();
+void N2kOpen() {
+	BinaryStatusTimer.UpdateNextTime();
 }
 
-void CZoneLoop() {
+void N2kLoop() {
     NMEA2000.ParseMessages();
 
-	if (CzUpdatePeriod127501.IsTime()) {
-		CzUpdatePeriod127501.UpdateNextTime();
-		SendCZoneSwitchState127501(BinaryDeviceInstance);
+	if (BinaryStatusTimer.IsTime()) {
+		BinaryStatusTimer.UpdateNextTime();
+        SendBinaryStatus(BinaryDeviceInstance);
 	}
 
     if (NMEA2000.GetN2kSource() != N2KSource) {
@@ -123,7 +123,7 @@ void CZoneLoop() {
     }
 }
 
-void CZoneHandleMessage(const tN2kMsg& N2kMsg) {
+void HandleN2kMessages(const tN2kMsg& N2kMsg) {
     uint16_t Handler_;
     for (Handler_ = 0; NMEA2000Handlers[Handler_].PGN != 0 && !(N2kMsg.PGN == NMEA2000Handlers[Handler_].PGN); Handler_++);
     if (NMEA2000Handlers[Handler_].PGN != 0) {
@@ -136,11 +136,11 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
     String status_ = ItemStatus == N2kOnOff_On ? "On" : "Off";
     DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, status_.c_str());
 
-    SetCZRelayOutput(SwitchIndex, ItemStatus);
+    SetSwitchStatus(SwitchIndex, ItemStatus);
 
     //send out change and status to other N2k devices on network
-    SendCZoneSwitchState127501(BinaryDeviceInstance);
-    SendCZoneSwitchChangeRequest127502(BinaryDeviceInstance, SwitchIndex, ItemStatus);
+    SendBinaryStatus(BinaryDeviceInstance);
+    SendSwitchBankCommand(BinaryDeviceInstance, SwitchIndex, ItemStatus);
 }
 
 void SetN2kSwitchBankCommand(tN2kMsg& N2kMsg, unsigned char DeviceBankInstance, tN2kBinaryStatus BankStatus){
@@ -152,8 +152,8 @@ void SetN2kSwitchBankCommand(tN2kMsg& N2kMsg, unsigned char DeviceBankInstance, 
 //  The message is sent in response to a change in switch state and is sent to all other devices on the network
 //************************************************************************************************************
 
-void SendCZoneSwitchState127501(unsigned char DeviceInstance) {
-	DEBUG_PRINTLN("SendCZoneSwitchState127501");
+void SendBinaryStatus(unsigned char DeviceInstance) {
+	DEBUG_PRINTLN("SendBinaryStatus");
     tN2kMsg N2kMsg_;
 	//PrintBinaryStatus(SwitchBankStatus);
     SetN2kBinaryStatus(N2kMsg_, DeviceInstance, SwitchBankStatus);
@@ -165,7 +165,8 @@ void SendCZoneSwitchState127501(unsigned char DeviceInstance) {
 //  The message is sent in response to a change in switch state and is sent to all other devices on the network
 //************************************************************************************************************
 
-void SendCZoneSwitchChangeRequest127502(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
+void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
+	DEBUG_PRINTLN("SendSwitchBankCommand");
     tN2kMsg N2kMsg_;
     tN2kBinaryStatus BinaryStatus_;
     N2kResetBinaryStatus(BinaryStatus_);
@@ -175,8 +176,8 @@ void SendCZoneSwitchChangeRequest127502(unsigned char DeviceInstance, uint8_t Sw
     NMEA2000.SendMsg(N2kMsg_);
 }
 
-void ParseN2kPGN127502(const tN2kMsg& N2kMsg) {
-	DEBUG_PRINTLN("ParseN2kPGN127502");
+void ParseSwitchBankCommand(const tN2kMsg& N2kMsg) {
+	DEBUG_PRINTLN("ParseSwitchBankCommand");
 
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);
@@ -196,7 +197,7 @@ void ParseN2kPGN127502(const tN2kMsg& N2kMsg) {
 }
 
 
-void SendCZSwitchStatus(uint8_t SwitchIndex, bool ItemStatus) {
+void SendSwitchStatus(uint8_t SwitchIndex, bool ItemStatus) {
     SetChangeSwitchState(SwitchIndex, ItemStatus);
 }
 
