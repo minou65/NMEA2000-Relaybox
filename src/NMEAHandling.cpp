@@ -34,7 +34,7 @@ typedef struct {
 } tNMEA2000Handler;
 
 tNMEA2000Handler NMEA2000Handlers[] = {
-    {127502L,ParseSwitchBankCommand},
+    {127502L,ParseSwitchBankControl},
     {0,0}
 };
 
@@ -138,7 +138,7 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
 
     //send out change and status to other N2k devices on network
     SendBinaryStatus(BinaryDeviceInstance);
-    SendSwitchBankCommand(BinaryDeviceInstance, SwitchIndex, ItemStatus);
+    SendSwitchBankControl(BinaryDeviceInstance, SwitchIndex, ItemStatus);
 }
 
 //************************************************************************************************************
@@ -159,8 +159,8 @@ void SendBinaryStatus(unsigned char DeviceInstance) {
 //  The message is sent in response to a change in switch state and is sent to all other devices on the network
 //************************************************************************************************************
 
-void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
-	DEBUG_PRINTLN("SendSwitchBankCommand");
+void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
+	DEBUG_PRINTLN("SendSwitchBankControl");
 	DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, ItemStatus == N2kOnOff_On ? "On" : "Off");
     tN2kMsg N2kMsg_;
 	tN2kOnOff State_ = ItemStatus ? N2kOnOff_On : N2kOnOff_Off;
@@ -170,8 +170,8 @@ void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bo
     NMEA2000.SendMsg(N2kMsg_);
 }
 
-void ParseSwitchBankCommand(const tN2kMsg& N2kMsg) {
-	DEBUG_PRINTLN("ParseSwitchBankCommand");
+void ParseSwitchBankControl(const tN2kMsg& N2kMsg) {
+	DEBUG_PRINTLN("ParseSwitchBankControl");
 
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);

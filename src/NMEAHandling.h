@@ -19,8 +19,8 @@ void HandleN2kMessages(const tN2kMsg& N2kMsg);
 
 void  SendBinaryStatus(unsigned char DeviceInstance);
 
-void SendSwitchBankCommand(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus);
-void ParseSwitchBankCommand(const tN2kMsg& N2kMsg);
+void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus);
+void ParseSwitchBankControl(const tN2kMsg& N2kMsg);
 
 void SendSwitchStatus(uint8_t SwitchIndex, bool ItemStatus);
 extern void SetSwitchStatus(uint8_t output, bool ItemStatus) __attribute__ ((weak));
