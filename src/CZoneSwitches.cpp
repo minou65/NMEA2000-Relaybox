@@ -29,10 +29,14 @@ tN2kSyncScheduler CzUpdatePeriod65284(false, 2000, 500);
 tN2kSyncScheduler CzUpdatePeriod65283(false, 500, 100);
 tN2kSyncScheduler CzUpdatePeriod127501(false, 1000, 500);
 
-uint8_t CzSwitchState1 = 0;
-uint8_t CzSwitchState2 = 0;
-uint8_t CzMfdDisplaySyncState1 = 0;
-uint8_t CzMfdDisplaySyncState2 = 0;
+tN2kBinaryStatus SwitchStatus = 0;
+tN2kBinaryStatus DisplayStatus = 0;
+
+
+//uint8_t CzSwitchState1 = 0;
+//uint8_t CzSwitchState2 = 0;
+//uint8_t CzMfdDisplaySyncState1 = 0;
+//uint8_t CzMfdDisplaySyncState2 = 0;
 bool    CzConfigAuthenticated = false;
 
 typedef struct {
@@ -180,71 +184,95 @@ void SetN2kSwitchBankCommand(tN2kMsg& N2kMsg, unsigned char DeviceBankInstance, 
 // ********************************************************************************************
 
 void ParseCZoneMFDSwitchChangeRequest65280(const tN2kMsg& N2kMsg) {
-	// DEBUG_PRINTLN("ParseCZoneMFDSwitchChangeRequest65280");
+	
 
     int index_ = 0;
     if (N2kMsg.PGN != 65280UL || N2kMsg.Get2ByteUInt(index_) != CZoneMessage) 
         return;
 
-    index_ = 5;
-    if (CzDipSwitch != N2kMsg.GetByte(index_)) 
-        return; // if byte5 == CzMfdDipSwitch then its from the MFD
+    DEBUG_PRINTLN("ParseCZoneMFDSwitchChangeRequest65280");
 
-    index_ = 6; // if byte6 == 0xF1 set switch on or 0xF2 set the switch off
-    uint8_t state_ = N2kMsg.GetByte(index_);
-    if (state_ == 0xf1 || state_ == 0xf2) {
+    tN2kBinaryStatus BinaryStatus_;
+    N2kResetBinaryStatus(BinaryStatus_);
 
-        index_ = 2;
-        state_ = N2kMsg.GetByte(index_); // Get which bit to toggle 
-        switch (state_) {
+    //if (ParseN2kSwitchbankControl(N2kMsg, BinaryDeviceInstance, BinaryStatus_)) {
+    //    for (uint8_t Index_ = 0; Index_ < NumberOfSwitches; Index_++) {
+    //        if (Index_ > 63) break; // only 64 bits in the message
+    //        tN2kOnOff State_ = N2kGetStatusOnBinaryStatus(BinaryStatus_, Index_ + 1);
+    //        if (State_ != N2kOnOff_Unavailable) {
+    //            N2kSetStatusBinaryOnStatus(SwitchStatus, State_, Index_ + 1);
+    //            N2kSetStatusBinaryOnStatus(DisplayStatus, State_, Index_ + 1);
+    //            PrintBinaryStatus(DisplayStatus);
+    //            SetChangeSwitchState(Index_ + 1, (State_ == N2kOnOff_On ? true : false));
 
-        case 0x05:  CzSwitchState1 ^= 0x01; // toggle state of the of switch bit
-            CzMfdDisplaySyncState1 ^= 0x01; // toggle state of the of switch bit for MDF display sync
-            SetChangeSwitchState(1, CzSwitchState1 & 0x01); // send the change out
-            break;
+    //        }
+    //    }
+    //}
 
-        case 0x06:  CzSwitchState1 ^= 0x02;
-            CzMfdDisplaySyncState1 ^= 0x04;
-            SetChangeSwitchState(2, CzSwitchState1 & 0x02); // send the change out
-            break;
 
-        case 0x07:  CzSwitchState1 ^= 0x04;
-            CzMfdDisplaySyncState1 ^= 0x10;
-            SetChangeSwitchState(3, CzSwitchState1 & 0x04); // send the change out
-            break;
 
-        case 0x08:  CzSwitchState1 ^= 0x08;
-            CzMfdDisplaySyncState1 ^= 0x40;
-            SetChangeSwitchState(4, CzSwitchState1 & 0x08); // send the change out
-            break;
-            // second 4 switches 
-        case 0x09:  CzSwitchState2 ^= 0x01; // state of the four switches
-            CzMfdDisplaySyncState2 ^= 0x01; // for MDF display sync
-            SetChangeSwitchState(5, CzSwitchState2 & 0x01); // send the change out
-            break;
-        case 0x0a:  CzSwitchState2 ^= 0x02;
-            CzMfdDisplaySyncState2 ^= 0x04;
-            SetChangeSwitchState(6, CzSwitchState2 & 0x02); // send the change out
-            break;
-        case 0x0b:  CzSwitchState2 ^= 0x04;
-            CzMfdDisplaySyncState2 ^= 0x10;
-            SetChangeSwitchState(7, CzSwitchState2 & 0x04); // send the change out
-            break;
-        case 0x0c:  CzSwitchState2 ^= 0x08;
-            CzMfdDisplaySyncState2 ^= 0x40;
-            SetChangeSwitchState(8, CzSwitchState2 & 0x08); // send the change out
-        }
-    }
-    else if (state_ == 0x40) {  // 0x04 = end of change 65280 msg 
-        index_ = 2;
-        state_ = N2kMsg.GetByte(index_); // Get which bit to toggle 
-        if (state_ > 0x08) {
-            SendCZoneSwitchChangeAck65283(CzSwitchBank2SerialNum); // If switch 5 to 8 send sync reply to network
-        }
-        else {
-            SendCZoneSwitchChangeAck65283(CzSwitchBank1SerialNum); // else sync 1 to 4 to network
-        }
-    }
+
+
+
+    //index_ = 5;
+    //if (CzDipSwitch != N2kMsg.GetByte(index_)) 
+    //    return; // if byte5 == CzMfdDipSwitch then its from the MFD
+
+    //index_ = 6; // if byte6 == 0xF1 set switch on or 0xF2 set the switch off
+    //uint8_t state_ = N2kMsg.GetByte(index_);
+    //if (state_ == 0xf1 || state_ == 0xf2) {
+
+    //    index_ = 2;
+    //    state_ = N2kMsg.GetByte(index_); // Get which bit to toggle 
+    //    switch (state_) {
+
+    //    case 0x05:  CzSwitchState1 ^= 0x01; // toggle state of the of switch bit
+    //        CzMfdDisplaySyncState1 ^= 0x01; // toggle state of the of switch bit for MDF display sync
+    //        SetChangeSwitchState(1, CzSwitchState1 & 0x01); // send the change out
+    //        break;
+
+    //    case 0x06:  CzSwitchState1 ^= 0x02;
+    //        CzMfdDisplaySyncState1 ^= 0x04;
+    //        SetChangeSwitchState(2, CzSwitchState1 & 0x02); // send the change out
+    //        break;
+
+    //    case 0x07:  CzSwitchState1 ^= 0x04;
+    //        CzMfdDisplaySyncState1 ^= 0x10;
+    //        SetChangeSwitchState(3, CzSwitchState1 & 0x04); // send the change out
+    //        break;
+
+    //    case 0x08:  CzSwitchState1 ^= 0x08;
+    //        CzMfdDisplaySyncState1 ^= 0x40;
+    //        SetChangeSwitchState(4, CzSwitchState1 & 0x08); // send the change out
+    //        break;
+    //        // second 4 switches 
+    //    case 0x09:  CzSwitchState2 ^= 0x01; // state of the four switches
+    //        CzMfdDisplaySyncState2 ^= 0x01; // for MDF display sync
+    //        SetChangeSwitchState(5, CzSwitchState2 & 0x01); // send the change out
+    //        break;
+    //    case 0x0a:  CzSwitchState2 ^= 0x02;
+    //        CzMfdDisplaySyncState2 ^= 0x04;
+    //        SetChangeSwitchState(6, CzSwitchState2 & 0x02); // send the change out
+    //        break;
+    //    case 0x0b:  CzSwitchState2 ^= 0x04;
+    //        CzMfdDisplaySyncState2 ^= 0x10;
+    //        SetChangeSwitchState(7, CzSwitchState2 & 0x04); // send the change out
+    //        break;
+    //    case 0x0c:  CzSwitchState2 ^= 0x08;
+    //        CzMfdDisplaySyncState2 ^= 0x40;
+    //        SetChangeSwitchState(8, CzSwitchState2 & 0x08); // send the change out
+    //    }
+    //}
+    //else if (state_ == 0x40) {  // 0x04 = end of change 65280 msg 
+    //    index_ = 2;
+    //    state_ = N2kMsg.GetByte(index_); // Get which bit to toggle 
+    //    if (state_ > 0x08) {
+    //        SendCZoneSwitchChangeAck65283(CzSwitchBank2SerialNum); // If switch 5 to 8 send sync reply to network
+    //    }
+    //    else {
+    //        SendCZoneSwitchChangeAck65283(CzSwitchBank1SerialNum); // else sync 1 to 4 to network
+    //    }
+    //}
 }
 
 // ******************************************************************************
@@ -256,25 +284,26 @@ void ParseCZoneMFDSwitchChangeRequest65280(const tN2kMsg& N2kMsg) {
 // ******************************************************************************
 
 void SendCZoneSwitchChangeAck65283(unsigned char CzSwitchBankSerialNum) {
+	DEBUG_PRINTLN("SendCZoneSwitchChangeAck65283");
 
-    tN2kMsg N2kMsg_;
-    N2kMsg_.SetPGN(65283L);
-    N2kMsg_.Priority = 7;
-    N2kMsg_.Destination = 0;
-    N2kMsg_.Add2ByteUInt(CZoneMessage);
-    N2kMsg_.AddByte(CzSwitchBankSerialNum);
-    
-    if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum) {
-        N2kMsg_.AddByte(CzMfdDisplaySyncState1); // is it switchbank 1 to 4 or 5 to 8
-	} else  {
-        N2kMsg_.AddByte(CzMfdDisplaySyncState2);
-	}
+ //   tN2kMsg N2kMsg_;
+ //   N2kMsg_.SetPGN(65283L);
+ //   N2kMsg_.Priority = 7;
+ //   N2kMsg_.Destination = 0;
+ //   N2kMsg_.Add2ByteUInt(CZoneMessage);
+ //   N2kMsg_.AddByte(CzSwitchBankSerialNum);
+ //   
+ //   if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum) {
+ //       N2kMsg_.AddByte(CzMfdDisplaySyncState1); // is it switchbank 1 to 4 or 5 to 8
+	//} else  {
+ //       N2kMsg_.AddByte(CzMfdDisplaySyncState2);
+	//}
 
-    N2kMsg_.Add2ByteUInt(0x0000);
-    N2kMsg_.AddByte(0x00);
-    N2kMsg_.AddByte(0x10);
+ //   N2kMsg_.Add2ByteUInt(0x0000);
+ //   N2kMsg_.AddByte(0x00);
+ //   N2kMsg_.AddByte(0x10);
 
-    NMEA2000.SendMsg(N2kMsg_);
+ //   NMEA2000.SendMsg(N2kMsg_);
 }
 
 
@@ -284,31 +313,32 @@ void SendCZoneSwitchChangeAck65283(unsigned char CzSwitchBankSerialNum) {
 // ********************************************************************
 
 void SendCZoneSwitchHeartbeat65284(unsigned char CzSwitchBankSerialNum) {
+	DEBUG_PRINTLN("SendCZoneSwitchHeartbeat65284");
 
-    tN2kMsg N2kMsg_;
-    N2kMsg_.SetPGN(65284L);
-    N2kMsg_.Priority = 7;
-    N2kMsg_.Add2ByteUInt(CZoneMessage);
-    if (CzConfigAuthenticated) {
+    //tN2kMsg N2kMsg_;
+    //N2kMsg_.SetPGN(65284L);
+    //N2kMsg_.Priority = 7;
+    //N2kMsg_.Add2ByteUInt(CZoneMessage);
+    //if (CzConfigAuthenticated) {
 
-        N2kMsg_.AddByte(CzSwitchBankSerialNum);
-        N2kMsg_.AddByte(0x0f); // ?
-        if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum){
-            N2kMsg_.AddByte(CzSwitchState1);
-        }
-        else {
-            N2kMsg_.AddByte(CzSwitchState2);
-        }   
-    }
-    else {   // if Switch bank is not authenticated, send following to MFD to prompt a 65290 from MFD
+    //    N2kMsg_.AddByte(CzSwitchBankSerialNum);
+    //    N2kMsg_.AddByte(0x0f); // ?
+    //    if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum){
+    //        N2kMsg_.AddByte(CzSwitchState1);
+    //    }
+    //    else {
+    //        N2kMsg_.AddByte(CzSwitchState2);
+    //    }   
+    //}
+    //else {   // if Switch bank is not authenticated, send following to MFD to prompt a 65290 from MFD
 
-        N2kMsg_.AddByte(0xFF);
-        N2kMsg_.Add2ByteUInt(0x0f0f);
-    }
-    N2kMsg_.Add2ByteUInt(0x0000);
-    N2kMsg_.AddByte(0x00);
+    //    N2kMsg_.AddByte(0xFF);
+    //    N2kMsg_.Add2ByteUInt(0x0f0f);
+    //}
+    //N2kMsg_.Add2ByteUInt(0x0000);
+    //N2kMsg_.AddByte(0x00);
 
-    NMEA2000.SendMsg(N2kMsg_);
+    //NMEA2000.SendMsg(N2kMsg_);
 }
 
 void ParseMDF65284(const tN2kMsg& N2kMsg) {
@@ -396,38 +426,39 @@ void ParseCZoneConfigRequest65290(const tN2kMsg& N2kMsg) {
 //************************************************************************************************************
 
 void SendCZoneSwitchStateBroadcast130817(unsigned char CzSwitchBankSerialNum) {
+	DEBUG_PRINTLN("SendCZoneSwitchStateBroadcast130817");
 
-    tN2kMsg N2kMsg_;
-    N2kMsg_.SetPGN(130817L);
-    N2kMsg_.Priority = 7;
-    N2kMsg_.Add2ByteUInt(CZoneMessage);
-    N2kMsg_.Destination = N2KSID;
-    N2kMsg_.AddByte(0x01); // ?? maybe an "instance" value
-    if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum) { // is it switch 1 to 4 or 5 to 8
-        N2kMsg_.AddByte(CzSwitchBank1SerialNum);
-        for (uint8_t i_ = 0; i_ < 4; i_++)
-        {
-            if (CzSwitchState1 & (1 << i_)) 
-                N2kMsg_.AddByte(0x01); // if switch is on set Bit 0 of first byte
-            else 
-                N2kMsg_.AddByte(0x00);
-            N2kMsg_.Add2ByteUInt(0x0000);
-        }
-    }
-    else {
-        N2kMsg_.AddByte(CzSwitchBank2SerialNum);
-        for (uint8_t i_ = 0; i_ < 4; i_++)
-        {
-            if (CzSwitchState2 & (1 << i_)) 
-                N2kMsg_.AddByte(0x01);
-            else 
-                N2kMsg_.AddByte(0x00);
-            N2kMsg_.Add2ByteUInt(0x0000);
-        }
-    }
-    N2kMsg_.Add3ByteInt(0); // Pad out for the non existant switches
-    N2kMsg_.Add3ByteInt(0);
-    NMEA2000.SendMsg(N2kMsg_);
+    //tN2kMsg N2kMsg_;
+    //N2kMsg_.SetPGN(130817L);
+    //N2kMsg_.Priority = 7;
+    //N2kMsg_.Add2ByteUInt(CZoneMessage);
+    //N2kMsg_.Destination = N2KSID;
+    //N2kMsg_.AddByte(0x01); // ?? maybe an "instance" value
+    //if (CzSwitchBankSerialNum == CzSwitchBank1SerialNum) { // is it switch 1 to 4 or 5 to 8
+    //    N2kMsg_.AddByte(CzSwitchBank1SerialNum);
+    //    for (uint8_t i_ = 0; i_ < 4; i_++)
+    //    {
+    //        if (CzSwitchState1 & (1 << i_)) 
+    //            N2kMsg_.AddByte(0x01); // if switch is on set Bit 0 of first byte
+    //        else 
+    //            N2kMsg_.AddByte(0x00);
+    //        N2kMsg_.Add2ByteUInt(0x0000);
+    //    }
+    //}
+    //else {
+    //    N2kMsg_.AddByte(CzSwitchBank2SerialNum);
+    //    for (uint8_t i_ = 0; i_ < 4; i_++)
+    //    {
+    //        if (CzSwitchState2 & (1 << i_)) 
+    //            N2kMsg_.AddByte(0x01);
+    //        else 
+    //            N2kMsg_.AddByte(0x00);
+    //        N2kMsg_.Add2ByteUInt(0x0000);
+    //    }
+    //}
+    //N2kMsg_.Add3ByteInt(0); // Pad out for the non existant switches
+    //N2kMsg_.Add3ByteInt(0);
+    //NMEA2000.SendMsg(N2kMsg_);
 }
 
 
@@ -437,18 +468,9 @@ void SendCZoneSwitchStateBroadcast130817(unsigned char CzSwitchBankSerialNum) {
 //************************************************************************************************************
 
 void SendCZoneSwitchState127501(unsigned char DeviceInstance) {
-
+	DEBUG_PRINTLN("SendCZoneSwitchState127501");
     tN2kMsg N2kMsg_;
-    tN2kBinaryStatus BinaryStatus_;
-    
-    
-    N2kResetBinaryStatus(BinaryStatus_);
-
-    BinaryStatus_ = (BinaryStatus_ & CzMfdDisplaySyncState2) << 8; //
-    BinaryStatus_ = BinaryStatus_ | CzMfdDisplaySyncState1;
-    BinaryStatus_ = BinaryStatus_ | 0xffffffffffff0000ULL;
-
-    SetN2kBinaryStatus(N2kMsg_, DeviceInstance, BinaryStatus_);
+    SetN2kBinaryStatus(N2kMsg_, DeviceInstance, DisplayStatus);
     NMEA2000.SendMsg(N2kMsg_);
 }
 
@@ -467,70 +489,98 @@ void SendCZoneSwitchChangeRequest127502(unsigned char DeviceInstance, uint8_t Sw
     NMEA2000.SendMsg(N2kMsg_);
 }
 
+void PrintBinaryStatus(tN2kBinaryStatus status) {
+    char buffer[65]; // 64 Bits + Nullterminator
+    for (int i = 63; i >= 0; i--) {
+        buffer[63 - i] = (status & (1ULL << i)) ? '1' : '0';
+    }
+    buffer[64] = '\0'; // Nullterminator
+    Serial.printf("DisplayStatus: %s\n", buffer);
+}
+
 void ParseN2kPGN127502(const tN2kMsg& N2kMsg) {
 	DEBUG_PRINTLN("ParseN2kPGN127502");
 
-    tN2kOnOff State_;
-    unsigned char ChangeIndex_;
-    int Index_ = 0;
-    uint8_t DeviceBankInstance_ = N2kMsg.GetByte(Index_);
-    if (N2kMsg.PGN != 127502L && DeviceBankInstance_ != BinaryDeviceInstance) return; //Nothing to see here
-    uint16_t BankStatus_ = N2kMsg.Get2ByteUInt(Index_);
-    //Serial.println(BankStatus_);
-    for (ChangeIndex_ = 0; ChangeIndex_ < NumberOfSwitches; ChangeIndex_++) {
+	tN2kBinaryStatus BinaryStatus_;
+	N2kResetBinaryStatus(BinaryStatus_);
 
-        State_ = (tN2kOnOff)(BankStatus_ & 0x03);
-        if (State_ != N2kOnOff_Unavailable) 
-            break; // index (0 to 7) found for switch and state
-        BankStatus_ >>= 2;
-    }
-    //Serial.println(ChangeIndex_);
-    //Serial.println(State_);
+	if (ParseN2kSwitchbankControl(N2kMsg, BinaryDeviceInstance, BinaryStatus_)) {
+		for (uint8_t Index_ = 0; Index_ < NumberOfSwitches; Index_++) {
+			if (Index_ > 63) break; // only 64 bits in the message
+			tN2kOnOff State_ = N2kGetStatusOnBinaryStatus(BinaryStatus_, Index_ + 1);
+            if (State_ != N2kOnOff_Unavailable) {
+				N2kSetStatusBinaryOnStatus(SwitchStatus, State_, Index_ + 1);
+				N2kSetStatusBinaryOnStatus(DisplayStatus, State_, Index_ + 1);
+				PrintBinaryStatus(DisplayStatus);
+                SetChangeSwitchState(Index_ + 1, (State_ == N2kOnOff_On ? true : false));
 
-    switch (ChangeIndex_) {
-
-    case 0x00:  CzSwitchState1 ^= 0x01; // toggle state of the of switch bit
-        CzMfdDisplaySyncState1 ^= 0x01; // toggle state of the of switch bit for MDF display sync
-        SetChangeSwitchState(1, CzSwitchState1 & 0x01); // send the change out
-        break;
-
-    case 0x01:  CzSwitchState1 ^= 0x02;
-        CzMfdDisplaySyncState1 ^= 0x04;
-        SetChangeSwitchState(2, CzSwitchState1 & 0x02); // send the change out
-        break;
-
-    case 0x02:  CzSwitchState1 ^= 0x04;
-        CzMfdDisplaySyncState1 ^= 0x10;
-        SetChangeSwitchState(3, CzSwitchState1 & 0x04); // send the change out
-        break;
-
-    case 0x03:  CzSwitchState1 ^= 0x08;
-        CzMfdDisplaySyncState1 ^= 0x40;
-        SetChangeSwitchState(4, CzSwitchState1 & 0x08); // send the change out
-        break;
-        // second 4 switches 
-    case 0x04:  CzSwitchState2 ^= 0x01; // state of the four switches
-        CzMfdDisplaySyncState2 ^= 0x01; // for MDF display sync
-        SetChangeSwitchState(5, CzSwitchState2 & 0x01); // send the change out
-        break;
-    case 0x05:  CzSwitchState2 ^= 0x02;
-        CzMfdDisplaySyncState2 ^= 0x04;
-        SetChangeSwitchState(6, CzSwitchState2 & 0x02); // send the change out
-        break;
-    case 0x06:  CzSwitchState2 ^= 0x04;
-        CzMfdDisplaySyncState2 ^= 0x10;
-        SetChangeSwitchState(7, CzSwitchState2 & 0x04); // send the change out
-        break;
-    case 0x07:  CzSwitchState2 ^= 0x08;
-        CzMfdDisplaySyncState2 ^= 0x40;
-        SetChangeSwitchState(8, CzSwitchState2 & 0x08); // send the change out
-    }
+            }
+		}
+	}
 
 
-    if (ChangeIndex_ > 0x08) 
-        SendCZoneSwitchChangeAck65283(CzSwitchBank2SerialNum); // If switch 5 to 8 send sync reply to network
-    else  
-        SendCZoneSwitchChangeAck65283(CzSwitchBank1SerialNum); // else sync 1 to 4 to network
+
+    //tN2kOnOff State_;
+    //unsigned char ChangeIndex_;
+    //int Index_ = 0;
+    //uint8_t DeviceBankInstance_ = N2kMsg.GetByte(Index_);
+    //if (N2kMsg.PGN != 127502L && DeviceBankInstance_ != BinaryDeviceInstance) return; //Nothing to see here
+    //uint16_t BankStatus_ = N2kMsg.Get2ByteUInt(Index_);
+    ////Serial.println(BankStatus_);
+    //for (ChangeIndex_ = 0; ChangeIndex_ < NumberOfSwitches; ChangeIndex_++) {
+
+    //    State_ = (tN2kOnOff)(BankStatus_ & 0x03);
+    //    if (State_ != N2kOnOff_Unavailable) 
+    //        break; // index (0 to 7) found for switch and state
+    //    BankStatus_ >>= 2;
+    //}
+    ////Serial.println(ChangeIndex_);
+    ////Serial.println(State_);
+
+    //switch (ChangeIndex_) {
+
+    //case 0x00:  CzSwitchState1 ^= 0x01; // toggle state of the of switch bit
+    //    CzMfdDisplaySyncState1 ^= 0x01; // toggle state of the of switch bit for MDF display sync
+    //    SetChangeSwitchState(1, CzSwitchState1 & 0x01); // send the change out
+    //    break;
+
+    //case 0x01:  CzSwitchState1 ^= 0x02;
+    //    CzMfdDisplaySyncState1 ^= 0x04;
+    //    SetChangeSwitchState(2, CzSwitchState1 & 0x02); // send the change out
+    //    break;
+
+    //case 0x02:  CzSwitchState1 ^= 0x04;
+    //    CzMfdDisplaySyncState1 ^= 0x10;
+    //    SetChangeSwitchState(3, CzSwitchState1 & 0x04); // send the change out
+    //    break;
+
+    //case 0x03:  CzSwitchState1 ^= 0x08;
+    //    CzMfdDisplaySyncState1 ^= 0x40;
+    //    SetChangeSwitchState(4, CzSwitchState1 & 0x08); // send the change out
+    //    break;
+    //    // second 4 switches 
+    //case 0x04:  CzSwitchState2 ^= 0x01; // state of the four switches
+    //    CzMfdDisplaySyncState2 ^= 0x01; // for MDF display sync
+    //    SetChangeSwitchState(5, CzSwitchState2 & 0x01); // send the change out
+    //    break;
+    //case 0x05:  CzSwitchState2 ^= 0x02;
+    //    CzMfdDisplaySyncState2 ^= 0x04;
+    //    SetChangeSwitchState(6, CzSwitchState2 & 0x02); // send the change out
+    //    break;
+    //case 0x06:  CzSwitchState2 ^= 0x04;
+    //    CzMfdDisplaySyncState2 ^= 0x10;
+    //    SetChangeSwitchState(7, CzSwitchState2 & 0x04); // send the change out
+    //    break;
+    //case 0x07:  CzSwitchState2 ^= 0x08;
+    //    CzMfdDisplaySyncState2 ^= 0x40;
+    //    SetChangeSwitchState(8, CzSwitchState2 & 0x08); // send the change out
+    //}
+
+
+    //if (ChangeIndex_ > 0x08) 
+    //    SendCZoneSwitchChangeAck65283(CzSwitchBank2SerialNum); // If switch 5 to 8 send sync reply to network
+    //else  
+    //    SendCZoneSwitchChangeAck65283(CzSwitchBank1SerialNum); // else sync 1 to 4 to network
 
 }
 
