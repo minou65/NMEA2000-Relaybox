@@ -1,7 +1,7 @@
-// CZoneSwitches.h
+// NMEAHandling.h
 
-#ifndef _CZONESWITCHES_h
-#define _CZONESWITCHES_h
+#ifndef _NMEAHANDLING_h
+#define _NMEAHANDLING_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"

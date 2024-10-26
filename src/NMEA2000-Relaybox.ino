@@ -5,7 +5,7 @@
 #include "common.h"
 #include "webhandling.h"
 #include "version.h"
-#include "CZoneSwitches.h"
+#include "NMEAHandling.h"
 
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
@@ -25,7 +25,7 @@ void setup() {
 
     webinit();
 
-	CZoneSetup();
+	N2kBegin();
 
     esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch
@@ -35,7 +35,7 @@ void setup() {
 void loop() {
     webLoop();
 
-	CZoneLoop();
+	N2kLoop();
 
     ChangedConfiguration = false;
 	uint8_t output_ = 1;
@@ -44,7 +44,7 @@ void loop() {
 		if (relay_->isActive()) {
 			relay_->process();
             if ((relay_->offTime() > 0) && (relay_->isTimerDone())) {
-				SendCZSwitchStatus(output_, false);
+				SendSwitchStatus(output_, false);
 			}
 		}
 		relay_ = (Relay*)relay_->getNext();
@@ -54,7 +54,7 @@ void loop() {
     esp_task_wdt_reset();
 }
 
-void SetCZRelayOutput(uint8_t output, bool ItemStatus) {
+void SetSwitchStatus(uint8_t output, bool ItemStatus) {
     Relay* relay_ = &Relay1;
 	uint8_t relayIndex_ = 1;
     while (relay_ != nullptr) {
