@@ -17,7 +17,7 @@ void N2kLoop();
 
 void HandleN2kMessages(const tN2kMsg& N2kMsg);
 
-void  SendBinaryStatus(unsigned char DeviceInstance);
+void  SendBinaryStatusReport(unsigned char DeviceInstance);
 
 void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus);
 void ParseSwitchBankControl(const tN2kMsg& N2kMsg);

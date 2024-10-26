@@ -7,7 +7,7 @@
 #include <NMEA2000_CAN.h>
 #include <N2kTimer.h>
 
-bool debugMode = true;
+bool debugMode = false;
 
 #define DEBUG_PRINT(x) if (debugMode) Serial.print(x) 
 #define DEBUG_PRINTLN(x) if (debugMode) Serial.println(x)
@@ -112,7 +112,7 @@ void N2kLoop() {
 
 	if (BinaryStatusTimer.IsTime()) {
 		BinaryStatusTimer.UpdateNextTime();
-        SendBinaryStatus(BinaryDeviceInstance);
+        SendBinaryStatusReport(BinaryDeviceInstance);
 	}
 
     if (NMEA2000.GetN2kSource() != N2KSource) {
@@ -137,7 +137,7 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
     SetSwitchStatus(SwitchIndex, ItemStatus);
 
     //send out change and status to other N2k devices on network
-    SendBinaryStatus(BinaryDeviceInstance);
+    SendBinaryStatusReport(BinaryDeviceInstance);
     SendSwitchBankControl(BinaryDeviceInstance, SwitchIndex, ItemStatus);
 }
 
@@ -146,8 +146,8 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
 //  The message is sent in response to a change in switch state and is sent to all other devices on the network
 //************************************************************************************************************
 
-void SendBinaryStatus(unsigned char DeviceInstance) {
-	DEBUG_PRINTLN("SendBinaryStatus");
+void SendBinaryStatusReport(unsigned char DeviceInstance) {
+	DEBUG_PRINTLN("SendBinaryStatusReport");
     tN2kMsg N2kMsg_;
 	//PrintBinaryStatus(SwitchBankStatus);
     SetN2kBinaryStatus(N2kMsg_, DeviceInstance, SwitchBankStatus);
