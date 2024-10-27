@@ -12,6 +12,7 @@
 #include <IotWebConf.h>
 #include <N2kMessages.h>
 #include <IotWebConfOptionalGroup.h>
+#include <WebSerial.h>
 
 #include "neotimer.h"
 
@@ -98,7 +99,6 @@ public:
 
     void process() {
 		if (OffTimer.done()) {
-			Serial.println("Relay Off");
 			OffTimer.stop();
 			Off();
 		}
@@ -114,6 +114,9 @@ public:
 		if (atoi(_offValue) > 0) {
 			OffTimer.start(atoi(_offValue) * 1000);
 		}
+		WebSerial.printf("%s On\n", this->getId());
+		WebSerial.printf("    %s Off in %d seconds\n", this->getId(), atoi(_offValue));
+		WebSerial.printf("    %s GPIO %d\n", this->getId(), gpio_);
     }
 
     void Off() {
@@ -121,6 +124,7 @@ public:
         if ((gpio_ == 255)) return;
         digitalWrite(gpio_, LOW);
         _Status = N2kOnOff_Off;
+		WebSerial.printf("%s Off\n", this->getId());
     }
 
     tN2kOnOff Status() {
