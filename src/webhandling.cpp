@@ -168,11 +168,21 @@ void webinit() {
         }
     );
 
+    WebSerial.begin(&server, "/webserial");
+
     if (APModeOfflineTime > 0) {
         APModeTimer.start(APModeOfflineTime * 60 * 1000);
     }
 
     Serial.println("Ready.");
+
+	Relay* relay_ = &Relay1;
+	while (relay_ != nullptr) {
+		if (relay_->isActive()) {
+			relay_->begin();
+		}
+		relay_ = (Relay*)relay_->getNext();
+	}
 }
 
 void webLoop() {
