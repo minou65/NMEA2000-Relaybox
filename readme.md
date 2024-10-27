@@ -44,6 +44,7 @@ To ensure compatibility, the plotter must support both PGN 127501 and PGN 127502
 The device is configurable via a web interface, allowing for easy setup and management. Key configuration options include system settings, NMEA settings, and relay-specific settings such as GPIO pin assignments and off times.
 
 ## Schema
+<img src="sch/relaybox.png" width="600" alt="schema">
 
 ## NMEA 2000
 The following PNG's are send
