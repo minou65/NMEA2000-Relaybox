@@ -1,13 +1,14 @@
 # NMEA2000-Relaybox
+<img src="img/garmin.jpeg" width="600" alt="pinout">
 
-# Table of Contents
+## Table of Contents
 - [NMEA2000-Relaybox](#nmea2000-relaybox)
-- [Table of Contents](#table-of-contents)
-- [Description](#description)
-- [Schema](#schema)
-- [NMEA 2000](#nmea-2000)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Schema](#schema)
+  - [NMEA 2000](#nmea-2000)
   - [Librarys](#librarys)
-  - [Outputs](#outputs)
+  - [Hardware](#hardware)
     - [ESP32\_Relay\_X2](#esp32_relay_x2)
     - [ESP32\_Relay\_X8](#esp32_relay_x8)
   - [Configuration](#configuration)
@@ -31,11 +32,20 @@
   - [Blinking codes](#blinking-codes)
   - [Reset](#reset)
 
-# Description
+## Description
+The NMEA2000-Relaybox is a versatile device designed to interface with the NMEA2000 network, allowing for the control and monitoring of relays. This project enables seamless integration with marine electronics, providing a reliable solution for managing various electrical components on a vessel.
 
-# Schema
+The relay box supports the following functionalities:
+- **Binary Switch Bank Status (PGN 127501)**: This PGN is used to report the status of binary switches, allowing the monitoring of relay states.
+- **Switch Bank Control (PGN 127502)**: This PGN is used to control the state of the relays, enabling the activation or deactivation of connected devices.
 
-# NMEA 2000
+To ensure compatibility, the plotter must support both PGN 127501 and PGN 127502. This ensures that the relay box can communicate effectively with the plotter, providing real-time status updates and control capabilities.
+
+The device is configurable via a web interface, allowing for easy setup and management. Key configuration options include system settings, NMEA settings, and relay-specific settings such as GPIO pin assignments and off times.
+
+## Schema
+
+## NMEA 2000
 The following PNG's are send
 - 127501 - Binary Switch Bank Status
 - 127502 - Switch Bank Control
@@ -55,7 +65,14 @@ The following PNG will be recived
 
 __*__ new version and/or new repo
 
-## Outputs
+## Hardware
+This project uses an ESP32_Relay_X2 or X8 as the base board. An extension with the MCP2562 chip is connected to the expansion pins. Power is supplied via the NMEA bus.
+
+The relays can switch a current of up to 10A at a voltage of 30V.
+
+The initial programming must be done using a programmer (e.g., ESP-Prog). 
+The following image shows the pin layout of the expansion pins.
+
 <img src="img/esp32-pinout.jpg" width="300" alt="pinout">
 
 ### ESP32_Relay_X2
