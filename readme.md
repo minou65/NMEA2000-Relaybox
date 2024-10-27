@@ -56,10 +56,11 @@ The following PNG will be recived
 __*__ new version and/or new repo
 
 ## Outputs
-![Pinout](<img/esp32-pinout.jpg>)
+<img src="img/esp32-pinout.jpg" width="300" alt="pinout">
 
 ### ESP32_Relay_X2
-![alt text](img/2xrelay.png)
+<img src="img/2xrelay.png" width="300" alt="esp32_relay_x2">
+
 | GPIO | Output |
 | --- | --- |
 | 16 | Relais 1 | 
@@ -67,7 +68,8 @@ __*__ new version and/or new repo
 | 23 | internal LED |
 
 ### ESP32_Relay_X8
-![alt text](img/8xrelay.png)
+<img src="img/16xrelay.png" width="300" alt="esp32_relay_x8">
+
 | GPIO | Output |
 | --- | --- |
 | 32 | Relais 1 | 
