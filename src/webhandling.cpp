@@ -259,6 +259,16 @@ void convertParams() {
 
 void configSaved() {
     convertParams();
+
+
+    Relay* relay_ = &Relay1;
+    while (relay_ != nullptr) {
+        if (relay_->isActive()) {
+            relay_->begin();
+        }
+        relay_ = (Relay*)relay_->getNext();
+    }
+
     ChangedConfiguration = true;
 }
 
