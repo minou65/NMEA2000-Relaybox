@@ -18,7 +18,7 @@ uint8_t N2KSource = 22;
 uint8_t N2KSID = 255;
 uint8_t RelayAddress = 1;
 
-#define NumberOfSwitches 8   // change to 4 for bit switch bank
+uint8_t NumberOfSwitches = 8;   // change to 4 for bit switch bank
 
 void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus);
 

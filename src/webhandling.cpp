@@ -176,10 +176,12 @@ void webinit() {
 
     Serial.println("Ready.");
 
+	NumberOfSwitches = 0;
 	Relay* relay_ = &Relay1;
 	while (relay_ != nullptr) {
 		if (relay_->isActive()) {
 			relay_->begin();
+			NumberOfSwitches++;
 		}
 		relay_ = (Relay*)relay_->getNext();
 	}
@@ -260,11 +262,13 @@ void convertParams() {
 void configSaved() {
     convertParams();
 
+	NumberOfSwitches = 0;
 
     Relay* relay_ = &Relay1;
     while (relay_ != nullptr) {
         if (relay_->isActive()) {
             relay_->begin();
+			NumberOfSwitches++;
         }
         relay_ = (Relay*)relay_->getNext();
     }
