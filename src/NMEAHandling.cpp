@@ -13,9 +13,7 @@ bool debugMode = false;
 #define DEBUG_PRINTLN(x) if (debugMode) Serial.println(x)
 #define DEBUG_PRINTF(...) if (debugMode) Serial.printf(__VA_ARGS__)
 
-
-uint8_t BinaryDeviceInstance = 1; // Instance of 127501 switch state message
-uint8_t SwitchBankInstance = 1;   //Instance of 127502 change switch state message
+uint8_t SwitchBankInstance = 1;
 uint8_t N2KSource = 22;
 uint8_t N2KSID = 255;
 uint8_t RelayAddress = 1;
@@ -112,7 +110,7 @@ void N2kLoop() {
 
 	if (BinaryStatusTimer.IsTime()) {
 		BinaryStatusTimer.UpdateNextTime();
-        SendBinaryStatusReport(BinaryDeviceInstance);
+        SendBinaryStatusReport(SwitchBankInstance);
 	}
 
     if (NMEA2000.GetN2kSource() != N2KSource) {
@@ -137,8 +135,8 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
     SetSwitchStatus(SwitchIndex, ItemStatus);
 
     //send out change and status to other N2k devices on network
-    SendBinaryStatusReport(BinaryDeviceInstance);
-    SendSwitchBankControl(BinaryDeviceInstance, SwitchIndex, ItemStatus);
+    SendBinaryStatusReport(SwitchBankInstance);
+    SendSwitchBankControl(SwitchBankInstance, SwitchIndex, ItemStatus);
 }
 
 //************************************************************************************************************
@@ -164,8 +162,8 @@ void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bo
 	DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, ItemStatus == N2kOnOff_On ? "On" : "Off");
     tN2kMsg N2kMsg_;
 	tN2kOnOff State_ = ItemStatus ? N2kOnOff_On : N2kOnOff_Off;
-    N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, SwitchIndex);
-	// PrintBinaryStatus(SwitchBankStatus);
+    N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, SwitchIndex + RelayAddress);
+	PrintBinaryStatus(SwitchBankStatus);
     SetN2kSwitchbankControl(N2kMsg_, SwitchBankInstance, SwitchBankStatus);
     NMEA2000.SendMsg(N2kMsg_);
 }
@@ -176,14 +174,14 @@ void ParseSwitchBankControl(const tN2kMsg& N2kMsg) {
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);
 
-	if (ParseN2kSwitchbankControl(N2kMsg, BinaryDeviceInstance, BinaryStatus_)) {
+	if (ParseN2kSwitchbankControl(N2kMsg, SwitchBankInstance, BinaryStatus_)) {
 		for (uint8_t Index_ = 0; Index_ < NumberOfSwitches; Index_++) {
 			if (Index_ > 63) break; // only 64 bits in the message
-			tN2kOnOff State_ = N2kGetStatusOnBinaryStatus(BinaryStatus_, Index_ + 1);
+			tN2kOnOff State_ = N2kGetStatusOnBinaryStatus(BinaryStatus_, Index_ + RelayAddress);
             if (State_ != N2kOnOff_Unavailable) {
-				N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, Index_ + 1);
-				// PrintBinaryStatus(SwitchBankStatus);
-                SetChangeSwitchState(Index_ + 1, (State_ == N2kOnOff_On ? true : false));
+				N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, Index_ + RelayAddress);
+				PrintBinaryStatus(SwitchBankStatus);
+                SetChangeSwitchState(Index_, (State_ == N2kOnOff_On ? true : false));
 
             }
 		}
