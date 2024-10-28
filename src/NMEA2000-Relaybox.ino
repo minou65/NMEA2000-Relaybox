@@ -59,7 +59,7 @@ void loop() {
 
 void SetSwitchStatus(uint8_t output, bool ItemStatus) {
     Relay* relay_ = &Relay1;
-	uint8_t relayIndex_ = 1;
+	uint8_t relayIndex_ = 0;
     while (relay_ != nullptr) {
         if (relay_->isActive()) {
 			if (relayIndex_ == output) {
