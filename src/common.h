@@ -25,6 +25,7 @@ extern bool SaveConfiguration;
 extern uint8_t N2KSource;
 extern uint8_t SwitchBankInstance;
 extern uint8_t RelayAddress;
+extern uint8_t NumberOfSwitches;
 
 extern char Version[];
 
