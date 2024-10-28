@@ -251,7 +251,7 @@ bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
 void convertParams() {
 
     N2KSource = Config.Source();
-    BinaryDeviceInstance = Config.DeviceID() - 1;
+    SwitchBankInstance = Config.DeviceID() - 1;
     RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
