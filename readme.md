@@ -11,6 +11,7 @@
   - [Hardware](#hardware)
     - [ESP32\_Relay\_X2](#esp32_relay_x2)
     - [ESP32\_Relay\_X8](#esp32_relay_x8)
+    - [Case](#case)
   - [Configuration](#configuration)
     - [System Configuration](#system-configuration)
       - [Thing name](#thing-name)
@@ -21,8 +22,8 @@
     - [NMEA configuration](#nmea-configuration)
       - [Instance](#instance)
       - [SID](#sid)
-  - [Switch Bank Address](#switch-bank-address)
-  - [Relay Address](#relay-address)
+      - [Switch Bank Address](#switch-bank-address)
+      - [Relay Address](#relay-address)
     - [Relay configuration](#relay-configuration)
       - [GPIO](#gpio)
       - [Off Time (s)](#off-time-s)
@@ -100,6 +101,9 @@ The following image shows the pin layout of the expansion pins.
 | 13 | Relais 8 |
 | 23 | internal LED |
 
+### Case
+You will find in the stl folder two stl files. One for case and one for the lid.
+
 ## Configuration
 After the first boot, there are some values needs to be set up.
 These items are maked with __*__ (star) in the list below.
@@ -124,20 +128,21 @@ If you don’t plan to connect the sensor to a WiFi network, you don’t need to
 ### NMEA configuration
 
 #### Instance
-This should be unique at least on one device. May be best to have it unique over all devices sending this PGN. A total of 5 instances are occupied by the device. Starting with the number set here. __*__
+This should be unique at least on one device. May be best to have it unique over all devices sending this PGN. __*__
 
 #### SID
 Sequence identifier. In most cases you can use just 255 for SID. The sequence identifier field is used to tie different PGNs data together to same sampling or calculation time.
 
-## Switch Bank Address
-The device address is a unique identifier assigned to each device on the NMEA2000 network. This address ensures that each device can communicate without conflicts. The device address can be configured in the settings of the relay box.
+#### Switch Bank Address
+The deviswitch bank address is a unique identifier assigned to each device on the NMEA2000 network. This address ensures that each device can communicate without conflicts. You can address up to 254 devices
 
 ![Device1](img/Device1.png)
 ![Device2](img/Device2.png)
 ![Device3](img/Device3.png)
 
-## Relay Address
-The relay address specifies which relay is being controlled by the device. Each relay has a unique address that allows the system to identify and control it individually. This setting is crucial for ensuring that the correct relay is activated or deactivated as needed.
+#### Relay Address
+The relay address specifies which relay is being controlled by the device. Each relay has a unique address that allows the system to identify and control it individually. Each switch bank can control a maximum of 28 relays.
+Normaly the relay address is always 1. In some cases it can make sense that you stretch the switch bank address over more than one relay box. In this case you have to set the correct relay address
 
 ![Device1](img/Device1.png)
 ![Device2](img/Device2.png)
