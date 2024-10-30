@@ -39,15 +39,14 @@ void loop() {
 
     ChangedConfiguration = false;
 
-	uint8_t output_ = 1;
+	uint8_t output_ = 0;
     Relay* relay_ = &Relay1;
     while (relay_ != nullptr) {
 		if (relay_->isActive()) {
 
            if (relay_->isTimerDone()) {
-				Serial.printf("Relay %d Off\n", output_);
 				SendSwitchStatus(output_, false);
-		    }
+		   }
            relay_->process();
 		}
 		relay_ = (Relay*)relay_->getNext();
