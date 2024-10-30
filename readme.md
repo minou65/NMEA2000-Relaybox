@@ -68,12 +68,11 @@ The following PNG will be recived
 __*__ new version and/or new repo
 
 ## Hardware
-This project uses an ESP32_Relay_X2 or X8 as the base board. An extension with the MCP2562 chip is connected to the expansion pins. Power is supplied via the NMEA bus.
+This project uses an ESP32_Relay_X2 or X8 as the base board. An extension with the MCP2562 chip is connected to the expansion pins, enabling CAN bus communication. Power is supplied via the NMEA bus.
 
-The relays can switch a current of up to 10A at a voltage of 30V.
+The relays can switch a current of up to 10A at a voltage of 30V, providing robust control for various electrical components.
 
-The initial programming must be done using a programmer (e.g., ESP-Prog). 
-The following image shows the pin layout of the expansion pins.
+Initial programming must be done using a programmer (e.g., ESP-Prog). The following image shows the pin layout of the expansion pins.
 
 <img src="img/esp32-pinout.jpg" width="300" alt="pinout">
 
@@ -102,7 +101,11 @@ The following image shows the pin layout of the expansion pins.
 | 23 | internal LED |
 
 ### Case
-You will find in the stl folder two stl files. One for case and one for the lid.
+In the `stl` folder, you will find two STL files: one for the case and one for the lid.
+
+<img src="img/relaybox-case.jpg" width="300" alt="case">
+
+<img src="img/relaybox-lid.jpg" width="300" alt="lid">
 
 ## Configuration
 After the first boot, there are some values needs to be set up.
@@ -111,7 +114,7 @@ These items are maked with __*__ (star) in the list below.
 ### System Configuration
 
 #### Thing name
-Please change the name of the device to a name you think describes it the most. It is advised to incorporate a location here in case you are planning to set up multiple devices in the same area. You should only use english letters, and the "_" underscore character. Thus, must not use Space, dots, etc. E.g. `main_cabin` __*__
+Please change the name of the device to a name you think describes it the most. It is advised to incorporate a location here in case you are planning to set up multiple devices in the same area. You should only use english letters, and the "_" underscore character. Thus, must not use Space, dots, etc. E.g. `relays_enginroom` __*__
 
 #### AP password
 This password is used, when you want to access the device later on. You must provide a password with at least 8, at most 32 characters. You are free to use any characters, further more you are encouraged to pick a password at least 12 characters long containing at least 3 character classes. __*__
@@ -134,19 +137,16 @@ This should be unique at least on one device. May be best to have it unique over
 Sequence identifier. In most cases you can use just 255 for SID. The sequence identifier field is used to tie different PGNs data together to same sampling or calculation time.
 
 #### Switch Bank Address
-The deviswitch bank address is a unique identifier assigned to each device on the NMEA2000 network. This address ensures that each device can communicate without conflicts. You can address up to 254 devices
+The deviswitch bank address is a unique identifier assigned to each device on the NMEA2000 network. This address ensures that each device can communicate without conflicts. You can address up to 254 devices.
 
-![Device1](img/Device1.png)
-![Device2](img/Device2.png)
-![Device3](img/Device3.png)
+<img src="img/device-address.jpg" width="700" alt="device address">
+
 
 #### Relay Address
 The relay address specifies which relay is being controlled by the device. Each relay has a unique address that allows the system to identify and control it individually. Each switch bank can control a maximum of 28 relays.
 Normaly the relay address is always 1. In some cases it can make sense that you stretch the switch bank address over more than one relay box. In this case you have to set the correct relay address
 
-![Device1](img/Device1.png)
-![Device2](img/Device2.png)
-![Device3](img/Device3.png)
+<img src="img/relay-address.jpg" width="700" alt="relay address">
 
 ### Relay configuration
 #### GPIO
