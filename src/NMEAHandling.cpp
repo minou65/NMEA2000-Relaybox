@@ -54,7 +54,7 @@ void PrintBinaryStatus(tN2kBinaryStatus status) {
         buffer[63 - i] = (status & (1ULL << i)) ? '1' : '0';
     }
     buffer[64] = '\0'; // Nullterminator
-    Serial.printf("DisplayStatus: %s\n", buffer);
+    Serial.printf("BinaryStatus: %s\n", buffer);
 }
 
 void N2kBegin() {
