@@ -110,9 +110,11 @@ Initial programming must be done using a programmer (e.g., ESP-Prog). The follow
 ### Case
 In the `stl` folder, you will find two STL files: one for the case and one for the lid.
 
-<img src="img/relaybox-case.jpg" width="300" alt="case">
 
-<img src="img/relaybox-lid.jpg" width="300" alt="lid">
+
+<img src="img/relaybox-case.jpg" width="300" alt="case"> <img src="img/relaybox-lid.jpg" width="300" alt="lid">
+
+<img src="img/relaybox-closed.jpg" width="300" alt="closed"> <img src="img/relaybox-open.jpg" width="300" alt="open">
 
 ## Configuration
 After the first boot, there are some values needs to be set up.
