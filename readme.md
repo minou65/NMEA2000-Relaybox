@@ -5,6 +5,7 @@
 - [NMEA2000-Relaybox](#nmea2000-relaybox)
   - [Table of Contents](#table-of-contents)
   - [Description](#description)
+  - [Other Sensors](#other-sensors)
   - [Schema](#schema)
   - [NMEA 2000](#nmea-2000)
   - [Librarys](#librarys)
@@ -44,6 +45,12 @@ To ensure compatibility, the plotter must support both PGN 127501 and PGN 127502
 
 The device is configurable via a web interface, allowing for easy setup and management. Key configuration options include system settings, NMEA settings, and relay-specific settings such as GPIO pin assignments and off times.
 
+## Other Sensors
+ - [Fluid level](https://github.com/minou65/NMEA2000-FluidLevel)
+ - [DS1820 Temperatur Monitor](https://github.com/minou65/NMEA2000-DS1820)
+ - [BM280 environmental sensor](https://github.com/minou65/NMEA2000-BME280)
+ - [Battery monitor](https://github.com/minou65/NMEA2000-BatteryMonitor)
+
 ## Schema
 <img src="sch/relaybox.png" width="600" alt="schema">
 
@@ -58,17 +65,17 @@ The following PNG will be recived
 ## Librarys
 - [NMEA2000](https://github.com/ttlappalainen/NMEA2000)
 - [NMEA200_ESP32](https://github.com/ttlappalainen/NMEA2000_esp32)
-- [AsyncTCP (3.2.6) __"__](https://github.com/mathieucarbou/AsyncTCP)
-- [ESPAsyncWebServer (3.3.12) __*__](https://github.com/mathieucarbou/ESPAsyncWebServer)
-- [Webserial (2.0.7) __*__](https://github.com/ayushsharma82/WebSerial)
+- [AsyncTCP (3.2.6)](https://github.com/mathieucarbou/AsyncTCP)
+- [ESPAsyncWebServer (3.3.12)](https://github.com/mathieucarbou/ESPAsyncWebServer)
+- [Webserial (2.0.7)](https://github.com/ayushsharma82/WebSerial)
 - [IotWebConf](https://github.com/minou65/IotWebConf)
-- [IotWebConfAsync (1.0.2) __*__](https://github.com/minou65/IotWebConfAsync)
+- [IotWebConfAsync (1.0.2)](https://github.com/minou65/IotWebConfAsync)
 - [IotWebRoot](https://github.com/minou65/IotWebRoot)
 
 __*__ new version and/or new repo
 
 ## Hardware
-This project uses an ESP32_Relay_X2 or X8 as the base board. An extension with the MCP2562 chip is connected to the expansion pins, enabling CAN bus communication. Power is supplied via the NMEA bus.
+This project uses an ESP32_Relay_X2 or ESP32_Relay_X8 as the base board. An extension with the MCP2562 chip is connected to the expansion pins, enabling CAN bus communication. Power is supplied via the NMEA bus.
 
 The relays can switch a current of up to 10A at a voltage of 30V, providing robust control for various electrical components.
 
