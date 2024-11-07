@@ -88,8 +88,8 @@ Initial programming must be done using a programmer (e.g., ESP-Prog). The follow
 
 | GPIO | Output |
 | --- | --- |
-| 16 | Relais 1 | 
-| 17 | Relais 2 |
+| 16 | Relay 1 | 
+| 17 | Relay 2 |
 | 23 | internal LED |
 
 ### ESP32_Relay_X8
@@ -97,14 +97,14 @@ Initial programming must be done using a programmer (e.g., ESP-Prog). The follow
 
 | GPIO | Output |
 | --- | --- |
-| 32 | Relais 1 | 
-| 33 | Relais 2 |
-| 25 | Relais 3 | 
-| 26 | Relais 4 |
-| 27 | Relais 5 | 
-| 14 | Relais 6 |
-| 12 | Relais 7 | 
-| 13 | Relais 8 |
+| 32 | Relay 1 | 
+| 33 | Relay 2 |
+| 25 | Relay 3 | 
+| 26 | Relay 4 |
+| 27 | Relay 5 | 
+| 14 | Relay 6 |
+| 12 | Relay 7 | 
+| 13 | Relay 8 |
 | 23 | internal LED |
 
 ### Case
