@@ -10,7 +10,11 @@
 bool SaveConfiguration = false;
 bool ChangedConfiguration = false;
 
-#define WDT_TIMEOUT 5
+// Configuration for the Watchdog Timer
+esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = 5000, // Timeout in milliseconds
+    .trigger_panic = true // Trigger panic if the Watchdog Timer expires
+};
 
 char Version[] = VERSION_STR; // Manufacturer's Software version code
 
@@ -27,8 +31,10 @@ void setup() {
 
 	N2kBegin();
 
-    esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+    // Initialize the Watchdog Timer
+    esp_task_wdt_init(&wdt_config);
     esp_task_wdt_add(NULL); //add current thread to WDT watch
+
     Serial.println("device initilized");
 }
 
