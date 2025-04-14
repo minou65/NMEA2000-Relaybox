@@ -2,6 +2,8 @@
 #define ESP32_CAN_TX_PIN GPIO_NUM_5  // Set CAN TX port to D5 
 #define ESP32_CAN_RX_PIN GPIO_NUM_4  // Set CAN RX port to D4
 
+#include <esp_mac.h>
+
 #include "NMEAHandling.h"
 #include "common.h"
 #include <NMEA2000_CAN.h>
