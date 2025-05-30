@@ -260,6 +260,8 @@ void convertParams() {
     RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
+
+    ArduinoOTA.setHostname(iotWebConf.getThingName());
 }
 
 void configSaved() {
