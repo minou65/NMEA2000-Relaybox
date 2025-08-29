@@ -16,6 +16,8 @@
 
 #include "neotimer.h"
 
+extern void SetSwitchStatus(uint8_t output, bool ItemStatus);
+
 
 // -- Initial password to connect to the Thing, when it creates an own Access Point.
 const char wifiInitialApPassword[] = "123456789";
@@ -98,6 +100,8 @@ public:
     };
 
     void process() {
+		if (offTime() == 0) return;
+
 		if (OffTimer.done()) {
 			OffTimer.stop();
 			Off();
@@ -111,12 +115,12 @@ public:
         if ((gpio_ == 255)) return;
         digitalWrite(gpio_, HIGH);
         _Status = N2kOnOff_On;
-		if (atoi(_offValue) > 0) {
-			OffTimer.start(atoi(_offValue) * 1000);
+		if (offTime() > 0) {
+			OffTimer.start(offTime() * 1000);
 		}
-		WebSerial.printf("%s On\n", this->getId());
-		WebSerial.printf("    %s Off in %d seconds\n", this->getId(), atoi(_offValue));
-		WebSerial.printf("    %s GPIO %d\n", this->getId(), gpio_);
+		Serial.printf("%s On\n", this->getId());
+		Serial.printf("    %s Off in %d seconds\n", this->getId(), offTime());
+		Serial.printf("    %s GPIO %d\n", this->getId(), gpio_);
     }
 
     void Off() {
@@ -124,7 +128,7 @@ public:
         if ((gpio_ == 255)) return;
         digitalWrite(gpio_, LOW);
         _Status = N2kOnOff_Off;
-		WebSerial.printf("%s Off\n", this->getId());
+		Serial.printf("%s Off\n", this->getId());
     }
 
     tN2kOnOff Status() {
