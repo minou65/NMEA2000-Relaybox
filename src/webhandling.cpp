@@ -21,6 +21,7 @@
 #include <IotWebConfAsyncClass.h>
 #include <IotWebConfAsyncUpdateServer.h>
 #include <IotWebRoot.h>
+#include <driver/dac.h>
 
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
@@ -147,8 +148,8 @@ void webinit() {
     // -- Set up required URL handlers on the web server.
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) { handleRoot(request); });
     server.on("/config", HTTP_ANY, [](AsyncWebServerRequest* request) {
-        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
-        iotWebConf.handleConfig(&asyncWebRequestWrapper);
+        auto* asyncWebRequestWrapper = new AsyncWebRequestWrapper(request);
+        iotWebConf.handleConfig(asyncWebRequestWrapper);
         }
     );
     server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -165,6 +166,17 @@ void webinit() {
         handleData(request); 
         }
     );
+    server.on("/relay", HTTP_GET, [](AsyncWebServerRequest* request) {
+        if (request->hasParam("id") && request->hasParam("state")) {
+            int relayId = request->getParam("id")->value().toInt();      // 0-basiert
+            bool state = request->getParam("state")->value() == "on";    // "on" oder "off"
+            SetSwitchStatus(relayId - 1, state);
+            request->send(200, "text/plain", "OK");
+        }
+        else {
+            request->send(400, "text/plain", "Missing parameters");
+        }
+    });
     server.onNotFound([](AsyncWebServerRequest* request) {
         AsyncWebRequestWrapper asyncWebRequestWrapper(request);
         iotWebConf.handleNotFound(&asyncWebRequestWrapper);
@@ -193,6 +205,11 @@ void webinit() {
 void webLoop() {
     // -- doLoop should be called as frequently as possible.
     iotWebConf.doLoop();
+    dacDisable(DAC_CHANNEL_1); // Disable DAC output on GPIO25 to avoid noise
+	dacDisable(DAC_CHANNEL_2); // Disable DAC output on GPIO26 to avoid noise
+    pinMode(25, OUTPUT);
+	pinMode(26, OUTPUT);
+
     ArduinoOTA.handle();
 
     if (ChangedConfiguration) {
@@ -322,7 +339,7 @@ protected:
     virtual String getScriptInner() {
         String s_ = HtmlRootFormatProvider::getScriptInner();
 
-        s_.replace("{millisecond}", "1000");
+        s_.replace("{millisecond}", "500");
  
         s_ += F("function updateLED(element, status) {\n");
         s_ += F("   if (element) {\n");
@@ -344,6 +361,15 @@ protected:
             i_++;
         }
 
+        s_ += F("}\n");
+
+        s_ += F("function toggleRelay(relayId, newState) {\n");
+        s_ += F("    fetch('/relay?id=' + relayId + '&state=' + (newState ? 'on' : 'off'))\n");
+        s_ += F("        .then(function(response) { return response.text(); })\n");
+        s_ += F("        .then(function(data) {\n");
+        s_ += F("            // Optional: Status aktualisieren\n");
+        s_ += F("            if (typeof updateDataFromServer === 'function') updateDataFromServer();\n");
+        s_ += F("        });\n");
         s_ += F("}\n");
 
         return s_;
@@ -379,10 +405,11 @@ void handleRoot(AsyncWebServerRequest* request) {
     Relay* relay_ = &Relay1;
     uint8_t i_ = 1;
     while (relay_ != nullptr) {
-		if (relay_->isActive()) {
-			content_ += fp_.getHtmlTableRowClass(String(relay_->label) + ":", "led off", "relay" + String(i_)).c_str();
-		}
-
+        if (relay_->isActive()) {
+            content_ += ("<tr><td align=\"left\">" + String(relay_->label) + ":</td>"
+                "<td align=\"left\"><span id=\"relay" + String(i_) + "\" class=\"led off\" "
+                "onclick=\"toggleRelay(" + String(i_) + ", this.classList.contains('off'))\"></span></td></tr>\n").c_str();
+        }
         relay_ = (Relay*)relay_->getNext();
         i_++;
     }
