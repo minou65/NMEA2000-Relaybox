@@ -68,6 +68,8 @@ const char thingName[] = "NMEA2000-Relaybox";
 // -- Method declarations.
 void handleData(AsyncWebServerRequest* request);
 void handleRoot(AsyncWebServerRequest* request);
+void handleConfigSavedPage(iotwebconf::WebRequestWrapper* webRequestWrapper);
+void handleAPPasswordMissingPage(iotwebconf::WebRequestWrapper* webRequestWrapper);
 bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper);
 void convertParams();
 
@@ -139,6 +141,8 @@ void webinit() {
     iotWebConf.setConfigSavedCallback(&configSaved);
     iotWebConf.setWifiConnectionCallback(&wifiConnected);
     iotWebConf.setFormValidator(&formValidator);
+    iotWebConf.setConfigSavedPage(&handleConfigSavedPage);
+    iotWebConf.setConfigAPPasswordMissingPage(&handleAPPasswordMissingPage);
 
     iotWebConf.getApTimeoutParameter()->visible = true;
 
@@ -452,4 +456,29 @@ void handleRoot(AsyncWebServerRequest* request) {
         });
     response->addHeader("Server", "ESP Async Web Server");
     request->send(response);
+}
+
+void handleConfigSavedPage(iotwebconf::WebRequestWrapper* webRequestWrapper) {
+    webRequestWrapper->sendHeader("Location", "/", true);
+    webRequestWrapper->send(302, "text/plain", "Config saved");
+}
+
+void handleAPPasswordMissingPage(iotwebconf::WebRequestWrapper* webRequestWrapper) {
+    String content_;
+    MyHtmlRootFormatProvider fp_;
+
+    content_ += fp_.getHtmlHead(iotWebConf.getThingName());
+    content_ += fp_.getHtmlStyle();
+    content_ += fp_.getHtmlHeadEnd();
+    content_ += "<body>";
+    content_ += "You should change the default AP password to continue.";
+    content_ += fp_.addNewLine(2);
+    content_ += "Return to <a href = ''>configuration page</a>.";
+    content_ += fp_.addNewLine(1);
+    content_ += "Return to <a href='/'>home page</a>.";
+    content_ += "</body>";
+    content_ += fp_.getHtmlEnd();
+
+    webRequestWrapper->sendHeader("Content-Length", String(content_.length()));
+    webRequestWrapper->send(200, "text/html", content_);
 }
