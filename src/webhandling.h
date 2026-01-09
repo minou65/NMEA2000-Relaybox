@@ -9,12 +9,17 @@
 	#include "WProgram.h"
 #endif
 
-#include <IotWebConf.h>
 #include <N2kMessages.h>
+#include <IotWebConfAsync.h>
 #include <IotWebConfOptionalGroup.h>
 #include <WebSerial.h>
 
 #include "neotimer.h"
+
+#include <ArduinoOTA.h>
+#include <DNSServer.h>
+#include <IotWebConfAsyncUpdateServer.h>
+#include <IotWebRoot.h>
 
 extern void SetSwitchStatus(uint8_t output, bool ItemStatus);
 
@@ -26,7 +31,7 @@ extern void webinit();
 extern void webLoop();
 
 static WiFiClient wifiClient;
-extern IotWebConf iotWebConf;
+extern AsyncIotWebConf iotWebConf;
 
 class NMEAConfig : public iotwebconf::ParameterGroup {
 public:

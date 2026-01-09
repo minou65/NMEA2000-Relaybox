@@ -2,6 +2,7 @@
 // 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
+
 #if defined(ESP32)
 #include <WiFi.h>
 // #include <esp_wifi.h>
@@ -17,11 +18,8 @@
 #include "neotimer.h"
 
 #include <DNSServer.h>
-#include <IotWebConf.h>
-#include <IotWebConfAsyncClass.h>
 #include <IotWebConfAsyncUpdateServer.h>
 #include <IotWebRoot.h>
-#include <driver/dac.h>
 
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
@@ -82,7 +80,7 @@ AsyncWebServer server(80);
 AsyncWebServerWrapper asyncWebServerWrapper(&server);
 AsyncUpdateServer AsyncUpdater;
 
-IotWebConf iotWebConf(thingName, &dnsServer, &asyncWebServerWrapper, wifiInitialApPassword, CONFIG_VERSION);
+AsyncIotWebConf iotWebConf(thingName, &dnsServer, &asyncWebServerWrapper, wifiInitialApPassword, CONFIG_VERSION);
 
 char APModeOfflineValue[STRING_LEN];
 iotwebconf::NumberParameter APModeOfflineParam = iotwebconf::NumberParameter("AP offline mode after (minutes)", "APModeOffline", APModeOfflineValue, NUMBER_LEN, "0", "0..30", "min='0' max='30', step='1'");
@@ -209,8 +207,8 @@ void webinit() {
 void webLoop() {
     // -- doLoop should be called as frequently as possible.
     iotWebConf.doLoop();
-    dacDisable(DAC_CHANNEL_1); // Disable DAC output on GPIO25 to avoid noise
-	dacDisable(DAC_CHANNEL_2); // Disable DAC output on GPIO26 to avoid noise
+    dacDisable(25); // Disable DAC output on GPIO25 to avoid noise
+	dacDisable(26); // Disable DAC output on GPIO26 to avoid noise
     pinMode(25, OUTPUT);
 	pinMode(26, OUTPUT);
 

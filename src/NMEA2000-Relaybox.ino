@@ -1,9 +1,12 @@
 
 #define TESTMODE 0 // Enable test mode for relays (only first run, then normal operation). Set to 0 to disable test mode.
 
+#include <Arduino.h>
+
 #include "common.h"
 #include "webhandling.h"
 #include "version.h"
+#include <NMEA2000_esp32.h>
 #include "NMEAHandling.h"
 
 #include "neotimer.h"
