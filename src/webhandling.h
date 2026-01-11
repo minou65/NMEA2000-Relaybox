@@ -16,11 +16,6 @@
 
 #include "neotimer.h"
 
-#include <ArduinoOTA.h>
-#include <DNSServer.h>
-#include <IotWebConfAsyncUpdateServer.h>
-#include <IotWebRoot.h>
-
 extern void SetSwitchStatus(uint8_t output, bool ItemStatus);
 
 
