@@ -1,4 +1,14 @@
+/*
+Name: NMEA2000-Relaybox
 
+Description: 
+NMEA2000 Relaybox firmware for ESP32/ESP8266. Provides web interface for configuration 
+and control of relays, and handles NMEA2000 communication.
+
+Author: andy
+
+WEMOS D1 MINI ESP32
+*/
 #define TESTMODE 0 // Enable test mode for relays (only first run, then normal operation). Set to 0 to disable test mode.
 
 #include <Arduino.h>
