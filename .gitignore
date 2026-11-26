@@ -387,6 +387,7 @@ FodyWeavers.xsd
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+.vscode/
 
 # Local History for Visual Studio Code
 .history/
@@ -400,15 +401,24 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-*.heic
 .vscode/settings.json
-/src/NMEA2000-FluidLevel.ino.nodemcu-32s.bin
-/src/NMEA2000-FluidLevel.ino.nodemcu-32s.bin
-src/board.txt
-src/NMEA2000-Relaybox.ino.nodemcu-32s.bin
-src/NMEA2000-Relaybox.ino.esp32da.bin
-img/Thumbs.db
-img/Thumbs.db
-img/Thumbs.db
-sch/Thumbs.db
-img/Thumbs.db
+Thumbs.db
+
+
+# PlatformIO
+.pio/
+.piolibdeps/
+.clangd/
+
+# Lokale Python-Umgebungen (falls später verwendet)
+.venv/
+venv/
+
+# PlatformIO Coredumps
+coredump.*
+
+# Lokale Build-Artefakte
+*.elf
+*.map
+*.bin
+*.hex

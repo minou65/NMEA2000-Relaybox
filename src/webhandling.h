@@ -12,9 +12,9 @@
 #include <N2kMessages.h>
 #include <IotWebConfAsync.h>
 #include <IotWebConfOptionalGroup.h>
-#include <WebSerial.h>
+#include <EventLogger.h>
 
-#include "neotimer.h"
+#include <neotimer.h>
 
 extern void SetSwitchStatus(uint8_t output, bool ItemStatus);
 
@@ -118,9 +118,9 @@ public:
 		if (offTime() > 0) {
 			OffTimer.start(offTime() * 1000);
 		}
-		Serial.printf("%s On\n", this->getId());
-		Serial.printf("    %s Off in %d seconds\n", this->getId(), offTime());
-		Serial.printf("    %s GPIO %d\n", this->getId(), gpio_);
+		LOG_INFO("%s On", this->getId());
+		LOG_INFO_AT(1, "%s Off in %d seconds", this->getId(), offTime());
+		LOG_INFO_AT(1, "%s GPIO %d", this->getId(), gpio_);
     }
 
     void Off() {
@@ -128,7 +128,7 @@ public:
         if ((gpio_ == 255)) return;
         digitalWrite(gpio_, LOW);
         _Status = N2kOnOff_Off;
-		Serial.printf("%s Off\n", this->getId());
+		LOG_INFO("%s Off", this->getId());
     }
 
     tN2kOnOff Status() {

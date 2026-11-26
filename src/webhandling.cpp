@@ -1,7 +1,6 @@
 // 
 // 
 #include <Arduino.h>
-#include <ArduinoOTA.h>
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -15,7 +14,7 @@
 #include "common.h"
 #include "webhandling.h"
 #include "favicon.h"
-#include "neotimer.h"
+#include <neotimer.h>
 
 #include <DNSServer.h>
 #include <IotWebConfAsyncUpdateServer.h>
@@ -64,6 +63,7 @@ Neotimer APModeTimer = Neotimer();
 const char thingName[] = "NMEA2000-Relaybox";
 
 // -- Method declarations.
+void handleWebCommand(const String& command);
 void handleData(AsyncWebServerRequest* request);
 void handleRoot(AsyncWebServerRequest* request);
 void handleConfigSavedPage(iotwebconf::WebRequestWrapper* webRequestWrapper);
@@ -133,7 +133,18 @@ void webinit() {
 	iotWebConf.addParameterGroup(&Relay8);  
 
     iotWebConf.setupUpdateServer(
-        [](const char* updatePath) { AsyncUpdater.setup(&server, updatePath); },
+        [](const char* updatePath) {
+            AsyncUpdater.onBegin([](const String& message) {
+                LOG_INFO("%s", message.c_str());
+                });
+            AsyncUpdater.onEnd([](const String& message) { LOG_OK("%s", message.c_str()); });
+            AsyncUpdater.OnError([](const String& message) {
+                LOG_ERROR("%s", message.c_str());
+                });
+            AsyncUpdater.onProgress([](const String& message) { LOG_INFO("%s", message.c_str()); });
+            AsyncUpdater.onLog([](const String& message) { WEB_LOG_INFO("%s", message.c_str()); });
+            AsyncUpdater.setup(&server, updatePath);
+        },
         [](const char* userName, char* password) { AsyncUpdater.updateCredentials(userName, password); });
 
     iotWebConf.setConfigSavedCallback(&configSaved);
@@ -168,11 +179,6 @@ void webinit() {
         }
     );
 
-    server.onNotFound([](AsyncWebServerRequest* request) {
-        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
-        iotWebConf.handleNotFound(&asyncWebRequestWrapper);
-        }
-    );
     server.on("/data", HTTP_GET, [](AsyncWebServerRequest* request) { 
         handleData(request); 
         }
@@ -189,19 +195,36 @@ void webinit() {
             request->send(400, "text/plain", "Missing parameters");
         }
     });
+
+     IconHandler::registerHandlers(&server, favicon_ico, sizeof(favicon_ico));
+
+    // EventLogger Web initialisieren
+    bool webOk_ = eventLogger.beginWeb(&server, "/events");
+    if (!webOk_) {
+        eventLogger.log("EventLogger.beginWeb failed", EventLogger::Status::ERROR, 1);
+    }
+    
+    eventLogger.setCommandCallback([](const String& command_) {
+        handleWebCommand(command_);
+        });
+
     server.onNotFound([](AsyncWebServerRequest* request) {
         AsyncWebRequestWrapper asyncWebRequestWrapper(request);
         iotWebConf.handleNotFound(&asyncWebRequestWrapper);
         }
     );
 
-    WebSerial.begin(&server, "/webserial");
+    server.onNotFound([](AsyncWebServerRequest* request) {
+        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
+        iotWebConf.handleNotFound(&asyncWebRequestWrapper);
+        }
+    );
 
     if (APModeOfflineTime > 0) {
         APModeTimer.start(APModeOfflineTime * 60 * 1000);
     }
 
-    Serial.println("Ready.");
+    LOG_OK("Web server ready");
 
 	NumberOfSwitches = 0;
 	Relay* relay_ = &Relay1;
@@ -222,10 +245,8 @@ void webLoop() {
     pinMode(25, OUTPUT);
 	pinMode(26, OUTPUT);
 
-    ArduinoOTA.handle();
-
     if (ChangedConfiguration) {
-        Serial.println(F("Parameters are changed,save them"));
+        LOG_INFO("Parameters changed, saving configuration");
 
         Config.SetSource(N2KSource);
 
@@ -234,20 +255,19 @@ void webLoop() {
     }
 
     if (APModeTimer.done()) {
-        Serial.println(F("AP mode offline time reached"));
+        LOG_INFO("AP mode offline time reached");
         iotWebConf.goOffLine();
         APModeTimer.stop();
     }
 
     if (AsyncUpdater.isFinished()) {
-        Serial.println(F("Firmware update finished"));
+        LOG_OK("Firmware update finished");
         delay(1000);
         ESP.restart();
     }
 }
 
 void wifiConnected() {
-    ArduinoOTA.begin();
 }
 
 bool isValidPin(int pin) {
@@ -269,7 +289,7 @@ bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper) {
 
             uint8_t pin_ = atoi(webRequestWrapper->arg(relay_->gpioParam.getId()).c_str());
             
-            Serial.println("Validating pin " + String(pin_));
+            LOG_DEBUG("Validating pin %d", pin_);
 
             if (!isValidPin(pin_)) {
                 relay_->gpioParam.errorMessage = "Invalid pin number. See esp32 documentation";
@@ -289,8 +309,6 @@ void convertParams() {
     RelayAddress = Config.RelayAddress();
 
     APModeOfflineTime = atoi(APModeOfflineValue);
-
-    ArduinoOTA.setHostname(iotWebConf.getThingName());
 }
 
 void configSaved() {
@@ -399,8 +417,7 @@ void handleRoot(AsyncWebServerRequest* request) {
 
     content_ += fp_.getHtmlHead(iotWebConf.getThingName()).c_str();
 
-    content_ += String(F("<link rel=\"icon\" type=\"image/png\" sizes=\"96x96\" href=\"/apple-touch-icon.png\">\n")).c_str();
-    content_ += String(F("<link rel=\"apple-touch-icon\" sizes=\"96x96\" href=\"/apple-touch-icon.png\">\n")).c_str();
+    content_ += fp_.getIconLinks().c_str();
 
     content_ += fp_.getHtmlStyle().c_str();
     content_ += fp_.getHtmlHeadEnd().c_str();
@@ -493,4 +510,7 @@ void handleAPPasswordMissingPage(iotwebconf::WebRequestWrapper* webRequestWrappe
 
     webRequestWrapper->sendHeader("Content-Length", String(content_.length()));
     webRequestWrapper->send(200, "text/html", content_);
+}
+
+void handleWebCommand(const String& command) {
 }

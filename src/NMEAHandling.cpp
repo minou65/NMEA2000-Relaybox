@@ -8,12 +8,7 @@
 #include "common.h"
 #include <NMEA2000_CAN.h>
 #include <N2kTimer.h>
-
-bool debugMode = false;
-
-#define DEBUG_PRINT(x) if (debugMode) Serial.print(x) 
-#define DEBUG_PRINTLN(x) if (debugMode) Serial.println(x)
-#define DEBUG_PRINTF(...) if (debugMode) Serial.printf(__VA_ARGS__)
+#include <EventLogger.h>
 
 uint8_t SwitchBankInstance = 1;
 uint8_t N2KSource = 22;
@@ -56,7 +51,7 @@ void PrintBinaryStatus(tN2kBinaryStatus status) {
         buffer[63 - i] = (status & (1ULL << i)) ? '1' : '0';
     }
     buffer[64] = '\0'; // Nullterminator
-    Serial.printf("BinaryStatus: %s\n", buffer);
+    WEB_LOG_DEBUG("BinaryStatus: %s", buffer);
 }
 
 void N2kBegin() {
@@ -130,9 +125,9 @@ void HandleN2kMessages(const tN2kMsg& N2kMsg) {
 }
 
 void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
-	DEBUG_PRINTLN("SetChangeSwitchState");
+	WEB_LOG_DEBUG("SetChangeSwitchState");
     String status_ = ItemStatus == N2kOnOff_On ? "On" : "Off";
-    DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, status_.c_str());
+    WEB_LOG_DEBUG_AT(1, "Switch %d is %s", SwitchIndex, status_.c_str());
 
     SetSwitchStatus(SwitchIndex, ItemStatus);
 
@@ -147,7 +142,7 @@ void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus) {
 //************************************************************************************************************
 
 void SendBinaryStatusReport(unsigned char DeviceInstance) {
-	DEBUG_PRINTLN("SendBinaryStatusReport");
+	WEB_LOG_DEBUG("SendBinaryStatusReport");
     tN2kMsg N2kMsg_;
 	//PrintBinaryStatus(SwitchBankStatus);
     SetN2kBinaryStatus(N2kMsg_, DeviceInstance, SwitchBankStatus);
@@ -160,8 +155,8 @@ void SendBinaryStatusReport(unsigned char DeviceInstance) {
 //************************************************************************************************************
 
 void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bool ItemStatus){
-	DEBUG_PRINTLN("SendSwitchBankControl");
-	DEBUG_PRINTF("    Switch %d is %s\n", SwitchIndex, ItemStatus == N2kOnOff_On ? "On" : "Off");
+	WEB_LOG_DEBUG("SendSwitchBankControl");
+	WEB_LOG_DEBUG_AT(1, "Switch %d is %s", SwitchIndex, ItemStatus == N2kOnOff_On ? "On" : "Off");
     tN2kMsg N2kMsg_;
 	tN2kOnOff State_ = ItemStatus ? N2kOnOff_On : N2kOnOff_Off;
     N2kSetStatusBinaryOnStatus(SwitchBankStatus, State_, SwitchIndex + RelayAddress);
@@ -171,7 +166,7 @@ void SendSwitchBankControl(unsigned char DeviceInstance, uint8_t SwitchIndex, bo
 }
 
 void ParseSwitchBankControl(const tN2kMsg& N2kMsg) {
-	DEBUG_PRINTLN("ParseSwitchBankControl");
+	WEB_LOG_DEBUG("ParseSwitchBankControl");
 
 	tN2kBinaryStatus BinaryStatus_;
 	N2kResetBinaryStatus(BinaryStatus_);

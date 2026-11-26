@@ -19,7 +19,7 @@ WEMOS D1 MINI ESP32
 #include <NMEA2000_esp32.h>
 #include "NMEAHandling.h"
 
-#include "neotimer.h"
+#include <neotimer.h>
 
 
 #if TESTMODE == 1
@@ -46,12 +46,12 @@ void setup() {
         delay(1);
     }
 
-    Serial.printf("Firmware version:%s\n", Version);
+    LOG_INFO("Firmware version: %s", Version);
 
     webinit();
 	N2kBegin();
 
-    Serial.println("device initilized");
+    LOG_OK("Device initialized");
 
 #if TESTMODE == 1
     relayTestTimer.start();
