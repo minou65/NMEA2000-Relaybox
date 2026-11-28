@@ -10,12 +10,16 @@ Relays can also be switched directly from the web interface by clicking the LED 
 
 **Key Features:**
 - Supports up to 8 relays per device (expandable across multiple devices)
-- CAN bus communication via MCP2562
+- NMEA2000 CAN communication using the ESP32 CAN interface and an external MCP2562 transceiver
 - Web-based configuration interface
 - Compatible with plotters supporting PGN 127501 (Binary Switch Bank Status) and PGN 127502 (Switch Bank Control)
 - Synchronizes system time from NMEA2000 PGN 126992 (GPS/GLONASS) or PGN 129029 (GNSS), at most every 10 minutes
 - Displays sunrise and sunset for the current local date, calculated by `SunTimes` from system time and PGN 129029 coordinates. Greenwich/UTC is the default timezone. A valid GNSS fix received within the last 60 seconds is required; missing data and polar day/night are shown explicitly. Times assume a standard unobstructed horizon, not terrain or observer altitude.
 - Power supply via NMEA2000 bus
+
+## Important Hint
+
+Although this project communicates using NMEA2000, neither the device nor its software is certified or officially approved as an NMEA2000 product. Full compliance with every detail of the NMEA2000 specification is not guaranteed. Connecting this device to an NMEA2000 network is your responsibility and at your own risk.
 
 ---
 
@@ -23,12 +27,13 @@ Relays can also be switched directly from the web interface by clicking the LED 
 
 - [NMEA2000-Relaybox](#nmea2000-relaybox)
   - [Overview](#overview)
+  - [Important Hint](#important-hint)
   - [Table of Contents](#table-of-contents)
   - [Other NMEA2000 Projects](#other-nmea2000-projects)
   - [Hardware](#hardware)
     - [ESP32\_Relay\_X2 Pinout](#esp32_relay_x2-pinout)
     - [ESP32\_Relay\_X8 Pinout](#esp32_relay_x8-pinout)
-  - [Libraries Used](#libraries-used)
+  - [Libraries](#libraries)
   - [Wiring Diagram](#wiring-diagram)
   - [Programming](#programming)
   - [Case and Enclosure](#case-and-enclosure)
@@ -56,7 +61,7 @@ In addition to the relay box, the following NMEA2000 projects are also available
 
 ## Hardware
 
-This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base. The MCP2562 chip is connected to the expansion header for CAN bus communication. Power is supplied directly from the NMEA2000 bus. Each relay can switch up to 10A at 30V.
+This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base. The ESP32 CAN interface connects to the NMEA2000 bus through an external MCP2562 CAN transceiver (TX: GPIO 5, RX: GPIO 4). The MCP2562 is a transceiver, not a CAN controller. Power is supplied directly from the NMEA2000 bus. Each relay can switch up to 10A at 30V.
 
 ### ESP32_Relay_X2 Pinout
 <img src="img/2xrelay.png" width="300" alt="ESP32_Relay_X2">
@@ -84,16 +89,9 @@ This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base.
 
 ---
 
-## Libraries Used
+## Libraries
 
-- [NMEA2000](https://github.com/ttlappalainen/NMEA2000)
-- [NMEA2000_ESP32](https://github.com/ttlappalainen/NMEA2000_esp32)
-- [AsyncTCP (3.2.6)](https://github.com/mathieucarbou/AsyncTCP)
-- [ESPAsyncWebServer (3.3.12)](https://github.com/mathieucarbou/ESPAsyncWebServer)
-- [WebSerial (2.0.7)](https://github.com/ayushsharma82/WebSerial)
-- [IotWebConf](https://github.com/minou65/IotWebConf)
-- [IotWebConfAsync (1.0.2)](https://github.com/minou65/IotWebConfAsync)
-- [IotWebRoot](https://github.com/minou65/IotWebRoot)
+The firmware uses the NMEA2000 and ESP32 NMEA2000 libraries, ESP Async WebServer and AsyncTCP, IotWebConf and its async extensions, IotWebRoot, EventLogger, and neotimer. PlatformIO searches the shared library folders configured in `platformio.ini` (`..\..\Libs\External`, `..\..\Libs\Private`, and `..\..\Libs\NMEA`). These libraries are not pinned to versions in this project, so make sure the shared folders are available when building.
 
 ---
 
@@ -105,7 +103,14 @@ This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base.
 
 ## Programming
 
-To program the ESP32 Relay Box for the first time, you will need a hardware programmer such as the ESP-Prog. The image below shows the pinout of the expansion header.
+Build and upload the firmware from the project root using the PlatformIO CLI (or the PlatformIO IDE extension). The configured environment is `wemos_d1_mini32`:
+
+```sh
+pio run -e wemos_d1_mini32
+pio run -e wemos_d1_mini32 -t upload
+```
+
+Connect the board using its USB-to-serial interface or a compatible programmer such as the ESP-Prog. If PlatformIO does not detect the serial port automatically, specify it with `--upload-port` (for example, `--upload-port COM3`). The image below shows the pinout of the expansion header.
 
 **Firmware Upload Procedure:**
 
@@ -121,7 +126,7 @@ To program the ESP32 Relay Box for the first time, you will need a hardware prog
 rst:0x1 (POWERON_RESET),boot:0x3 (DOWNLOAD_BOOT(UART0/UART1/SDIO_REI_REO_V2))
 waiting for download
   ```
-3. Start the firmware upload from your development environment (e.g., Arduino IDE, PlatformIO).
+3. Run the PlatformIO upload command above.
 4. Once the upload is complete, press the EN button again to restart the device.
 
 <img src="img/esp32-pinout.jpg" width="300" alt="ESP32 expansion header pinout">
@@ -200,14 +205,14 @@ To update the firmware, open the Configuration page in the web interface and cli
 
 ## Reset
 
-To reset the device, pull the CONFIG_PIN (GPIO 13) to ground during startup. The device will use the initial password to build an AP (useful if the password is lost).
+To reset the device, pull the CONFIG_PIN (GPIO 19) to ground during startup. The device will use the initial password to build an AP (useful if the password is lost).
 
 ---
 
 ## Default Credentials
 
 - **Username:** admin
-- **Default password (when not connected to an AP):** 123456789
+- **Initial AP password:** `123456789` (the configured password may differ after setup)
 
 ## Default IP Address
 
