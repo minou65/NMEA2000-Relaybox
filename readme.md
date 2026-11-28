@@ -64,7 +64,7 @@ In addition to the relay box, the following NMEA2000 projects are also available
 This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base. The ESP32 CAN interface connects to the NMEA2000 bus through an external MCP2562 CAN transceiver (TX: GPIO 5, RX: GPIO 4). The MCP2562 is a transceiver, not a CAN controller. Power is supplied directly from the NMEA2000 bus. Each relay can switch up to 10A at 30V.
 
 ### ESP32_Relay_X2 Pinout
-<img src="img/2xrelay.png" width="300" alt="ESP32_Relay_X2">
+<img src="img/esp32_relay_x2.png" width="300" alt="ESP32_Relay_X2">
 
 | GPIO | Output      |
 |------|-------------|
@@ -73,7 +73,7 @@ This project uses either the ESP32_Relay_X2 or ESP32_Relay_X8 board as the base.
 | 23   | Internal LED|
 
 ### ESP32_Relay_X8 Pinout
-<img src="img/16xrelay.png" width="300" alt="ESP32_Relay_X8">
+<img src="img/esp32_relay_x8.jpg" width="300" alt="ESP32_Relay_X8">
 
 | GPIO | Output      |
 |------|-------------|
