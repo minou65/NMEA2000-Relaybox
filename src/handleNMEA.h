@@ -1,7 +1,7 @@
-// NMEAHandling.h
+// handleNMEA.h
 
-#ifndef _NMEAHANDLING_h
-#define _NMEAHANDLING_h
+#ifndef _HANDLENMEA_h
+#define _HANDLENMEA_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -10,10 +10,13 @@
 #endif
 
 #include <N2kMessages.h>
+#include "SunTimes.h"
 
-void N2kBegin();
-void N2kOpen();
-void N2kLoop();
+SunTimes::Result getSunTimes();
+
+void setupNMEA();
+void openNMEA();
+void loopNMEA();
 
 void HandleN2kMessages(const tN2kMsg& N2kMsg);
 

@@ -1,7 +1,7 @@
-// webhandling.h
+// handleWeb.h
 
-#ifndef _WEBHANDLING_h
-#define _WEBHANDLING_h
+#ifndef _HANDLEWEB_h
+#define _HANDLEWEB_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -22,8 +22,8 @@ extern void SetSwitchStatus(uint8_t output, bool ItemStatus);
 // -- Initial password to connect to the Thing, when it creates an own Access Point.
 const char wifiInitialApPassword[] = "123456789";
 
-extern void webinit();
-extern void webLoop();
+extern void setupWeb();
+extern void loopWeb();
 
 static WiFiClient wifiClient;
 extern AsyncIotWebConf iotWebConf;
@@ -83,7 +83,7 @@ private:
 
 class Relay : public iotwebconf::ChainedParameterGroup {
 public:
-    Relay(const char* id, const uint8_t gpio_) : ChainedParameterGroup(id, id) {
+    Relay(const char* id, const uint8_t gpio) : ChainedParameterGroup(id, id) {
 
         snprintf(_gpioID, STRING_LEN, "%s-gpio", this->getId());
         snprintf(_offID, STRING_LEN, "%s-offtime", this->getId());

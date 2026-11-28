@@ -12,7 +12,8 @@
 #endif
 
 #include "common.h"
-#include "webhandling.h"
+#include "handleWeb.h"
+#include "handleNMEA.h"
 #include "favicon.h"
 #include <neotimer.h>
 
@@ -106,7 +107,7 @@ protected:
 };
 CustomHtmlFormatProvider customHtmlFormatProvider;
 
-void webinit() {
+void setupWeb() {
     iotWebConf.setStatusPin(STATUS_PIN, ON_LEVEL);
     iotWebConf.setConfigPin(CONFIG_PIN);
     iotWebConf.setHtmlFormatProvider(&customHtmlFormatProvider);
@@ -162,20 +163,20 @@ void webinit() {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) { handleRoot(request); });
 
     server.on("/config", HTTP_ANY, [](AsyncWebServerRequest* request) {
-        auto* asyncWebRequestWrapper = new AsyncWebRequestWrapper(request);
-        iotWebConf.handleConfig(asyncWebRequestWrapper);
+        auto* asyncWebRequestWrapper_ = new AsyncWebRequestWrapper(request);
+        iotWebConf.handleConfig(asyncWebRequestWrapper_);
         }
     );
 
     server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest* request) {
-        AsyncWebServerResponse* response = request->beginResponse_P(200, "image/x-icon", favicon_ico, sizeof(favicon_ico));
-        request->send(response);
+        AsyncWebServerResponse* response_ = request->beginResponse_P(200, "image/x-icon", favicon_ico, sizeof(favicon_ico));
+        request->send(response_);
         }
     );
 
     server.on("/apple-touch-icon.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-        AsyncWebServerResponse* response = request->beginResponse_P(200, "image/png", favicon_ico, sizeof(favicon_ico));
-        request->send(response);
+        AsyncWebServerResponse* response_ = request->beginResponse_P(200, "image/png", favicon_ico, sizeof(favicon_ico));
+        request->send(response_);
         }
     );
 
@@ -186,9 +187,9 @@ void webinit() {
 
     server.on("/relay", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (request->hasParam("id") && request->hasParam("state")) {
-            int relayId = request->getParam("id")->value().toInt();      // 0-basiert
-            bool state = request->getParam("state")->value() == "on";    // "on" oder "off"
-            SetSwitchStatus(relayId - 1, state);
+            int relayId_ = request->getParam("id")->value().toInt();      // 0-basiert
+            bool state_ = request->getParam("state")->value() == "on";    // "on" oder "off"
+            SetSwitchStatus(relayId_ - 1, state_);
             request->send(200, "text/plain", "OK");
         }
         else {
@@ -204,19 +205,19 @@ void webinit() {
         eventLogger.log("EventLogger.beginWeb failed", EventLogger::Status::ERROR, 1);
     }
     
-    eventLogger.setCommandCallback([](const String& command_) {
-        handleWebCommand(command_);
+    eventLogger.setCommandCallback([](const String& command) {
+        handleWebCommand(command);
         });
 
     server.onNotFound([](AsyncWebServerRequest* request) {
-        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
-        iotWebConf.handleNotFound(&asyncWebRequestWrapper);
+        AsyncWebRequestWrapper asyncWebRequestWrapper_(request);
+        iotWebConf.handleNotFound(&asyncWebRequestWrapper_);
         }
     );
 
     server.onNotFound([](AsyncWebServerRequest* request) {
-        AsyncWebRequestWrapper asyncWebRequestWrapper(request);
-        iotWebConf.handleNotFound(&asyncWebRequestWrapper);
+        AsyncWebRequestWrapper asyncWebRequestWrapper_(request);
+        iotWebConf.handleNotFound(&asyncWebRequestWrapper_);
         }
     );
 
@@ -237,7 +238,7 @@ void webinit() {
 	}
 }
 
-void webLoop() {
+void loopWeb() {
     // -- doLoop should be called as frequently as possible.
     iotWebConf.doLoop();
     dacDisable(25); // Disable DAC output on GPIO25 to avoid noise
@@ -249,6 +250,10 @@ void webLoop() {
         LOG_INFO("Parameters changed, saving configuration");
 
         Config.SetSource(N2KSource);
+
+        if (!SunTimes::setTimezone("CET-1CEST,M3.5.0,M10.5.0/3")) {
+            LOG_ERROR("Failed to configure sun time timezone");
+        }
 
         iotWebConf.saveConfig();
         ChangedConfiguration = false;
@@ -332,6 +337,37 @@ void handleData(AsyncWebServerRequest* request) {
 
 	String json_ = "{";
 	json_ += "\"rssi\":" + String(WiFi.RSSI()) ;
+    SunTimes::Result sun_ = getSunTimes();
+    String sunrise_;
+    String sunset_;
+    switch (sun_.status) {
+    case SunTimes::Status::Ready: {
+        char sunriseBuffer_[48];
+        char sunsetBuffer_[48];
+        if (!SunTimes::formatTime(sun_.sunrise, sunriseBuffer_, sizeof(sunriseBuffer_))
+            || !SunTimes::formatTime(sun_.sunset, sunsetBuffer_, sizeof(sunsetBuffer_))) {
+            LOG_ERROR("Failed to format sun times");
+            request->send(500, "text/plain", "Failed to format sun times");
+            return;
+        }
+        sunrise_ = sunriseBuffer_;
+        sunset_ = sunsetBuffer_;
+        break;
+    }
+    case SunTimes::Status::TimeUnavailable:
+        sunrise_ = sunset_ = "Waiting for NMEA2000 time";
+        break;
+    case SunTimes::Status::PositionUnavailable:
+        sunrise_ = sunset_ = "Waiting for current GNSS position";
+        break;
+    case SunTimes::Status::PolarDay:
+        sunrise_ = sunset_ = "Polar day (sun does not set)";
+        break;
+    case SunTimes::Status::PolarNight:
+        sunrise_ = sunset_ = "Polar night (sun does not rise)";
+        break;
+    }
+    json_ += ",\"sunrise\":\"" + sunrise_ + "\",\"sunset\":\"" + sunset_ + "\"";
 	Relay* relay_ = &Relay1;
 	uint8_t i_ = 1;
 	while (relay_ != nullptr) {
@@ -380,6 +416,8 @@ protected:
 
         s_ += F("function updateData(jsonData) {\n");
         s_ += F("   document.getElementById('RSSIValue').innerHTML = jsonData.rssi + \"dBm\" \n");
+        s_ += F("   document.getElementById('sunrise').textContent = jsonData.sunrise;\n");
+        s_ += F("   document.getElementById('sunset').textContent = jsonData.sunset;\n");
 
         Relay* relay_ = &Relay1;
         uint8_t i_ = 1;
@@ -407,8 +445,8 @@ protected:
 };
 
 void handleRoot(AsyncWebServerRequest* request) {
-    AsyncWebRequestWrapper asyncWebRequestWrapper(request);
-    if (iotWebConf.handleCaptivePortal(&asyncWebRequestWrapper)) {
+    AsyncWebRequestWrapper asyncWebRequestWrapper_(request);
+    if (iotWebConf.handleCaptivePortal(&asyncWebRequestWrapper_)) {
         return;
     }
 
@@ -449,6 +487,13 @@ void handleRoot(AsyncWebServerRequest* request) {
     content_ += fp_.getHtmlTableEnd().c_str();
     content_ += fp_.getHtmlFieldsetEnd().c_str();
 
+    content_ += fp_.getHtmlFieldset("Sun times").c_str();
+    content_ += fp_.getHtmlTable().c_str();
+    content_ += fp_.getHtmlTableRowText("Sunrise:", "<span id=\"sunrise\">Waiting for data</span>").c_str();
+    content_ += fp_.getHtmlTableRowText("Sunset:", "<span id=\"sunset\">Waiting for data</span>").c_str();
+    content_ += fp_.getHtmlTableEnd().c_str();
+    content_ += fp_.getHtmlFieldsetEnd().c_str();
+
     content_ += fp_.getHtmlFieldset("Network").c_str();
     content_ += fp_.getHtmlTable().c_str();
     content_ += fp_.getHtmlTableRowText("MAC Address:", WiFi.macAddress()).c_str();
@@ -469,7 +514,7 @@ void handleRoot(AsyncWebServerRequest* request) {
     content_ += fp_.getHtmlTableEnd().c_str();
     content_ += fp_.getHtmlEnd().c_str();
 
-    AsyncWebServerResponse* response = request->beginChunkedResponse("text/html", [content_](uint8_t* buffer, size_t maxLen, size_t index) -> size_t {
+    AsyncWebServerResponse* response_ = request->beginChunkedResponse("text/html", [content_](uint8_t* buffer, size_t maxLen, size_t index) -> size_t {
 
         std::string chunk_ = "";
         size_t len_ = min(content_.length() - index, maxLen);
@@ -483,8 +528,8 @@ void handleRoot(AsyncWebServerRequest* request) {
             return 0;
 
         });
-    response->addHeader("Server", "ESP Async Web Server");
-    request->send(response);
+    response_->addHeader("Server", "ESP Async Web Server");
+    request->send(response_);
 }
 
 void handleConfigSavedPage(iotwebconf::WebRequestWrapper* webRequestWrapper) {

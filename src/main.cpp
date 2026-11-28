@@ -14,10 +14,10 @@ WEMOS D1 MINI ESP32
 #include <Arduino.h>
 
 #include "common.h"
-#include "webhandling.h"
+#include "handleWeb.h"
 #include "version.h"
 #include <NMEA2000_esp32.h>
-#include "NMEAHandling.h"
+#include "handleNMEA.h"
 
 #include <neotimer.h>
 
@@ -48,8 +48,12 @@ void setup() {
 
     LOG_INFO("Firmware version: %s", Version);
 
-    webinit();
-	N2kBegin();
+    setupWeb();
+	setupNMEA();
+
+    if (!SunTimes::setTimezone("CET-1CEST,M3.5.0,M10.5.0/3")) {
+        LOG_ERROR("Failed to configure sun time timezone");
+    }
 
     LOG_OK("Device initialized");
 
@@ -61,8 +65,8 @@ void setup() {
 
 void loop() {
   
-    webLoop();
-    N2kLoop();
+    loopWeb();
+    loopNMEA();
     ChangedConfiguration = false;
 
 #if TESTMODE == 1
@@ -76,15 +80,15 @@ void loop() {
                 relayTestTimer.start();
 
                 // Count active relays
-                uint8_t activeCount = 0;
+                uint8_t activeCount_ = 0;
                 Relay* relay_ = &Relay1;
                 while (relay_ != nullptr) {
-                    if (relay_->isActive()) activeCount++;
+                    if (relay_->isActive()) activeCount_++;
                     relay_ = (Relay*)relay_->getNext();
                 }
 
                 // If all relays have been turned on, prepare to turn all off
-                if (relayTestIndex >= activeCount) {
+                if (relayTestIndex >= activeCount_) {
                     relayTestTurnOff = true;
                     relayTestTimer.start();
                 }
@@ -93,14 +97,14 @@ void loop() {
         else {
             if (relayTestTimer.done()) {
                 // Turn all relays off
-                uint8_t idx = 0;
+                uint8_t idx_ = 0;
                 Relay* relay_ = &Relay1;
                 while (relay_ != nullptr) {
                     if (relay_->isActive()) {
-                        SetSwitchStatus(idx, false);
+                        SetSwitchStatus(idx_, false);
                     }
                     relay_ = (Relay*)relay_->getNext();
-                    idx++;
+                    idx_++;
                 }
                 relayTestActive = false; // Stop test mode after one run
             }

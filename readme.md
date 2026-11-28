@@ -13,6 +13,8 @@ Relays can also be switched directly from the web interface by clicking the LED 
 - CAN bus communication via MCP2562
 - Web-based configuration interface
 - Compatible with plotters supporting PGN 127501 (Binary Switch Bank Status) and PGN 127502 (Switch Bank Control)
+- Synchronizes system time from NMEA2000 PGN 126992 (GPS/GLONASS) or PGN 129029 (GNSS), at most every 10 minutes
+- Displays sunrise and sunset for the current local date, calculated by `SunTimes` from system time and PGN 129029 coordinates. Greenwich/UTC is the default timezone. A valid GNSS fix received within the last 60 seconds is required; missing data and polar day/night are shown explicitly. Times assume a standard unobstructed horizon, not terrain or observer altitude.
 - Power supply via NMEA2000 bus
 
 ---
@@ -125,6 +127,19 @@ waiting for download
 <img src="img/esp32-pinout.jpg" width="300" alt="ESP32 expansion header pinout">
 
 ---
+
+### Sun time tests
+
+`SunTimes::setTimezone()` defaults to Greenwich (`UTC0`). To use Central European time, replace the startup call with `SunTimes::setTimezone("CET-1CEST,M3.5.0,M10.5.0/3")` and retain its error check. The setter configures the system-wide POSIX timezone and must be called before starting the web server. UTC system time and event timestamps remain unchanged; calculation uses the local calendar date, and the web interface labels times with the applicable timezone abbreviation (UTC, CET, or CEST).
+
+From a Visual Studio Developer Command Prompt at the project root:
+
+```bat
+cl /nologo /std:c++14 /EHsc /W4 /Fo.pio\build\ /Fe.pio\build\SunTimesTests.exe tests\SunTimesTests.cpp src\SunTimes.cpp
+.pio\build\SunTimesTests.exe
+```
+
+The native tests check published sunrise/sunset times (within two minutes), local date rollover, timezone formatting, invalid coordinates, and polar day/night. POSIX builds also check the exact CET/CEST transitions; Windows CRT does not implement the POSIX transition rules, so those cases are skipped there. The firmware build remains `pio run`.
 
 ## Case and Enclosure
 

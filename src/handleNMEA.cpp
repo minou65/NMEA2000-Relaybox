@@ -3,8 +3,11 @@
 #define ESP32_CAN_RX_PIN GPIO_NUM_4  // Set CAN RX port to D4
 
 #include <esp_mac.h>
+#include <time.h>
+#include <sys/time.h>
+#include <cmath>
 
-#include "NMEAHandling.h"
+#include "handleNMEA.h"
 #include "common.h"
 #include <NMEA2000_CAN.h>
 #include <N2kTimer.h>
@@ -17,7 +20,39 @@ uint8_t RelayAddress = 1;
 
 uint8_t NumberOfSwitches = 8;   // change to 4 for bit switch bank
 
+bool TimeSet = false;
+unsigned long LastTimeUpdate = 0;
+
+namespace {
+    portMUX_TYPE sunDataMux = portMUX_INITIALIZER_UNLOCKED;
+    double currentLatitude = 0;
+    double currentLongitude = 0;
+    bool positionValid = false;
+    unsigned long lastPositionUpdate = 0;
+}
+
+SunTimes::Result getSunTimes() {
+    portENTER_CRITICAL(&sunDataMux);
+    bool timeValid_ = TimeSet;
+    bool valid_ = positionValid && millis() - lastPositionUpdate < 60000;
+    double latitude_ = currentLatitude;
+    double longitude_ = currentLongitude;
+    portEXIT_CRITICAL(&sunDataMux);
+
+    SunTimes::Result result_;
+    if (!timeValid_) {
+        return result_;
+    }
+    if (!valid_) {
+        result_.status = SunTimes::Status::PositionUnavailable;
+        return result_;
+    }
+    return SunTimes::calculate(time(nullptr), latitude_, longitude_);
+}
+
 void SetChangeSwitchState(uint8_t SwitchIndex, bool ItemStatus);
+void ParseN2kSystemTime(const tN2kMsg& N2kMsg);
+void ParseN2kGNSS(const tN2kMsg& N2kMsg);
 
 tN2kSyncScheduler BinaryStatusTimer(false, 1000, 500);
 
@@ -29,7 +64,9 @@ typedef struct {
 } tNMEA2000Handler;
 
 tNMEA2000Handler NMEA2000Handlers[] = {
+    {126992L,ParseN2kSystemTime},
     {127502L,ParseSwitchBankControl},
+    {129029L,ParseN2kGNSS},
     {0,0}
 };
 
@@ -41,20 +78,112 @@ const unsigned long TransmitMessages[] PROGMEM = {
 };
 
 const unsigned long ReciveMessages[] PROGMEM = {
+    126992L,
     127502L,
+    129029L,
     0
 };
 
-void PrintBinaryStatus(tN2kBinaryStatus status) {
-    char buffer[65]; // 64 Bits + Nullterminator
-    for (int i = 63; i >= 0; i--) {
-        buffer[63 - i] = (status & (1ULL << i)) ? '1' : '0';
+void SetSystemTime(uint16_t DaysSince1970, double SecondsSinceMidnight) {
+    if (DaysSince1970 == 0xFFFF || !std::isfinite(SecondsSinceMidnight)
+        || SecondsSinceMidnight < 0 || SecondsSinceMidnight > 86400) {
+        LOG_DEBUG("Invalid NMEA2000 system time");
+        return;
     }
-    buffer[64] = '\0'; // Nullterminator
-    WEB_LOG_DEBUG("BinaryStatus: %s", buffer);
+
+    if (TimeSet && (millis() - LastTimeUpdate < 600000)) {
+        return;
+    }
+
+    time_t timestamp_ = (DaysSince1970 * 86400UL) + (time_t)SecondsSinceMidnight;
+
+    struct timeval tv_;
+    tv_.tv_sec = timestamp_;
+    tv_.tv_usec = 0;
+    if (settimeofday(&tv_, NULL) != 0) {
+        LOG_ERROR("Failed to set system time from NMEA2000");
+        return;
+    }
+
+    portENTER_CRITICAL(&sunDataMux);
+    TimeSet = true;
+    portEXIT_CRITICAL(&sunDataMux);
+    LastTimeUpdate = millis();
+
+    char timeStr_[64];
+    struct tm* timeinfo_ = gmtime(&timestamp_);
+    strftime(timeStr_, sizeof(timeStr_), "%Y-%m-%d %H:%M:%S", timeinfo_);
+    LOG_OK("System time set from NMEA2000: %s UTC", timeStr_);
 }
 
-void N2kBegin() {
+void ParseN2kSystemTime(const tN2kMsg& N2kMsg) {
+    unsigned char SID_;
+    uint16_t SystemDate_;
+    double SystemTime_;
+    tN2kTimeSource TimeSource_;
+
+    if (ParseN2kPGN126992(N2kMsg, SID_, SystemDate_, SystemTime_, TimeSource_)) {
+        if (TimeSource_ == N2ktimes_GPS || TimeSource_ == N2ktimes_GLONASS) {
+            SetSystemTime(SystemDate_, SystemTime_);
+        }
+    } else {
+        LOG_ERROR("Failed to parse PGN 126992");
+    }
+}
+
+void ParseN2kGNSS(const tN2kMsg& N2kMsg) {
+    unsigned char SID_;
+    uint16_t DaysSince1970_;
+    double SecondsSinceMidnight_;
+    double Latitude_;
+    double Longitude_;
+    double Altitude_;
+    tN2kGNSStype GNSStype_;
+    tN2kGNSSmethod GNSSmethod_;
+    unsigned char nSatellites_;
+    double HDOP_;
+    double PDOP_;
+    double GeoidalSeparation_;
+    unsigned char nReferenceStations_;
+    tN2kGNSStype ReferenceStationType_;
+    uint16_t ReferenceSationID_;
+    double AgeOfCorrection_;
+
+    if (ParseN2kPGN129029(N2kMsg, SID_, DaysSince1970_, SecondsSinceMidnight_,
+        Latitude_, Longitude_, Altitude_, GNSStype_, GNSSmethod_,
+        nSatellites_, HDOP_, PDOP_, GeoidalSeparation_,
+        nReferenceStations_, ReferenceStationType_,
+        ReferenceSationID_, AgeOfCorrection_)) {
+        SetSystemTime(DaysSince1970_, SecondsSinceMidnight_);
+        bool valid_ = GNSSmethod_ >= N2kGNSSm_GNSSfix && GNSSmethod_ <= N2kGNSSm_RTKFloat
+            && std::isfinite(Latitude_) && std::isfinite(Longitude_)
+            && Latitude_ >= -90 && Latitude_ <= 90 && Longitude_ >= -180 && Longitude_ <= 180;
+        portENTER_CRITICAL(&sunDataMux);
+        positionValid = valid_;
+        if (valid_) {
+            currentLatitude = Latitude_;
+            currentLongitude = Longitude_;
+            lastPositionUpdate = millis();
+        }
+        portEXIT_CRITICAL(&sunDataMux);
+        if (!valid_) {
+            LOG_DEBUG("GNSS position unavailable for sunrise/sunset calculation");
+        }
+    } else {
+        LOG_ERROR("Failed to parse PGN 129029");
+    }
+}
+
+void PrintBinaryStatus(tN2kBinaryStatus status) {
+    char buffer_[65]; // 64 Bits + Nullterminator
+    for (int i_ = 63; i_ >= 0; i_--) {
+        buffer_[63 - i_] = (status & (1ULL << i_)) ? '1' : '0';
+    }
+    buffer_[64] = '\0'; // Nullterminator
+    WEB_LOG_DEBUG("BinaryStatus: %s", buffer_);
+}
+
+void setupNMEA() {
     uint8_t chipid_[6];
     uint32_t id_ = 0;
 
@@ -92,17 +221,17 @@ void N2kBegin() {
     NMEA2000.ExtendTransmitMessages(TransmitMessages);
     NMEA2000.ExtendReceiveMessages(ReciveMessages);
 
-    NMEA2000.SetOnOpen(N2kOpen);
+    NMEA2000.SetOnOpen(openNMEA);
     NMEA2000.SetMsgHandler(HandleN2kMessages);
 
     NMEA2000.Open();
 }
 
-void N2kOpen() {
+void openNMEA() {
 	BinaryStatusTimer.UpdateNextTime();
 }
 
-void N2kLoop() {
+void loopNMEA() {
     NMEA2000.ParseMessages();
 
 	if (BinaryStatusTimer.IsTime()) {
